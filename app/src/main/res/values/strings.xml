@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">By The Way</string>
+    <string name="error_connection_icon">Error connection icon</string>
+    <string name="animation_de_chargement">animation de chargement</string>
+    <string name="r_essayer">Réessayer</string>
+    <string name="erreur_de_connexion">Erreur de connexion réseau, Veuillez Vérifier votre connexion Internet.</string>
+    <string name="error_connection_lent">La requête est trop lente, Veuillez réessayer.</string>
+    <string name="error_inconue">Une erreur a survenue, Veuillez Réessayer ou contacter notre support</string>
+</resources>
