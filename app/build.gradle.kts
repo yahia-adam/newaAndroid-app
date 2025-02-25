@@ -108,4 +108,6 @@ dependencies {
     // Dependency injection with Hilt
     //implementation(libs.hilt.android)
     //kapt(libs.hilt.android.compiler)
+
+    implementation(libs.privy.core)
 }

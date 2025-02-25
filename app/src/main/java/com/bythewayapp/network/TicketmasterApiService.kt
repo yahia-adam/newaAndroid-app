@@ -2,6 +2,7 @@ package com.bythewayapp.network
 
 import com.bythewayapp.BuildConfig
 import com.bythewayapp.model.TicketmasterResponse
+import com.bythewayapp.model.TicketmasterSuggestionResponse
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -11,22 +12,36 @@ interface TicketmasterApiService {
     @GET("discovery/v2/events")
     suspend fun searchEvents(
         @Query("apikey") apiKey: String,
-        @Query("local") local: String?,
-        //@Query("countryCode") countryCode: String?,
+        @Query("id") id: List<String>?,
+        @Query("locale") locale: String?,
+        @Query("city") city: String?,
+        @Query("countryCode") countryCode: String?,
         @Query("includeTest") includeTest: String?,
         @Query("startDateTime") startDateTime: String?,
         @Query("endDateTime") endDateTime: String?,
         @Query("keyword") keyword: String?,
         @Query("classificationName") classificationName: List<String>?,
-        @Query("size") size: String?,
+        @Query("classificationId") classificationId: List<String>?,
+        @Query("size") size: String?
     ): TicketmasterResponse
+
+    @GET("/discovery/v2/suggest")
+    suspend fun searchSuggestion(
+        @Query("apikey") apiKey: String,
+        @Query("keyword") keyword: String,
+        @Query("resource") resource: List<String>?,
+        @Query("includeTest") includeTest: String?,
+        @Query("countryCode") countryCode: String?,
+        @Query("locale") locale: String?
+    ): TicketmasterSuggestionResponse
 }
 
 object TicketmasterApi {
     private const val API_KEY = BuildConfig.TICKETMASTER_API_KEY
-    private const val LOCAL: String = "fr-fr"
-    //private const val COUNTRY_CODE: String = "fr"
+    private const val LOCALE: String = "fr"
+    private const val COUNTRY_CODE: String = "fr"
     private const val INCLUDE_TEST: String = "no"
+    private val RESOURCES: List<String> = listOf("events")
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("https://app.ticketmaster.com/")
@@ -37,20 +52,36 @@ object TicketmasterApi {
 
     suspend fun getEvents(
         keyword: String?,
+        id: List<String>?,
         startDateTime: String?,
         endDateTime: String?,
         size: String?,
-        classificationName: List<String>?
-    ) =
-        apiService.searchEvents(
-            apiKey = API_KEY,
-            startDateTime = startDateTime,
-            endDateTime = endDateTime,
-            keyword = keyword,
-            classificationName= classificationName,
-            size = size,
-            local = LOCAL,
-            //countryCode = COUNTRY_CODE,
-            includeTest = INCLUDE_TEST
-        )
+        classificationName: List<String>?,
+        classificationId: List<String>?,
+        city: String?,
+    ) = apiService.searchEvents(
+        apiKey = API_KEY,
+        id = id,
+        startDateTime = startDateTime,
+        endDateTime = endDateTime,
+        keyword = keyword,
+        classificationName= classificationName,
+        classificationId = classificationId,
+        size = size,
+        locale = LOCALE,
+        countryCode = COUNTRY_CODE,
+        includeTest = INCLUDE_TEST,
+        city = city
+    )
+
+    suspend fun getSuggestion(
+        keyword: String,
+    ) = apiService.searchSuggestion(
+        apiKey = API_KEY,
+        keyword = keyword,
+        locale = LOCALE,
+        includeTest = INCLUDE_TEST,
+        countryCode = COUNTRY_CODE,
+        resource = RESOURCES
+    )
 }
