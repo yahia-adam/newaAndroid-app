@@ -20,7 +20,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BythewayApp() {
-    val homeViewModel: HomeViewModel = viewModel()
+    //val homeViewModel: HomeViewModel = viewModel()
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -28,6 +29,8 @@ fun BythewayApp() {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
+
+            /*
             HomeScreen(
                 bythewayUiSate = homeViewModel.bythewayUiSate,
                 contentPadding = PaddingValues(
@@ -37,6 +40,7 @@ fun BythewayApp() {
                     end = 16.dp
                 )
             )
+             */
         }
     }
 }

@@ -16,10 +16,9 @@ fun getApiKey() = localProperties.getProperty("TICKETMASTER_API_KEY")
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-
+    alias(libs.plugins.compose.compiler)
     // Dependency injection with Hilt
-    //alias(libs.plugins.dagger.hilt.android)
-    //id("kotlin-kapt")
+    kotlin("kapt")
 }
 
 android {
@@ -72,16 +71,10 @@ android {
         }
     }
 
-    // Dependency injection with Hilt
-    //kapt {
-    //    correctErrorTypes = true
-    //}
-
     buildToolsVersion = "35.0.0"
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -97,17 +90,17 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
     // Retrofit2
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
-
     // viewModel lifecycle
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
     // Dependency injection with Hilt
-    //implementation(libs.hilt.android)
-    //kapt(libs.hilt.android.compiler)
-
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.android.compiler)
+    implementation (libs.androidx.hilt.navigation.compose)
+    // privy
     implementation(libs.privy.core)
+    // Navigation with jet pack compose
+    implementation(libs.androidx.navigation.compose)
 }

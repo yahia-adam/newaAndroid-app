@@ -3,5 +3,8 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
     // Dependency injection with Hilt
-    //alias(libs.plugins.dagger.hilt.android) apply false
+    alias(libs.plugins.hilt.android) apply false
+
+    // update to kotlin 2
+    alias(libs.plugins.compose.compiler) apply false
 }

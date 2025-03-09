@@ -17,10 +17,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
 
 @Composable
-@Preview
-fun EnterEmail(modifier: Modifier = Modifier) {
+fun PrivyLoginEmailStartScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController
+) {
     Column (
         modifier = modifier
             .fillMaxSize(),
@@ -51,6 +54,10 @@ fun EnterEmail(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun EnterOptCode(modifier: Modifier = Modifier) {
+fun PrivyLoginEmailEndScreen(
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    email: String
+) {
     
 }
