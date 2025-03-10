@@ -1,9 +1,7 @@
 package com.bythewayapp
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -14,13 +12,13 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import com.bythewayapp.ui.theme.screens.HomeScreen
 import com.bythewayapp.ui.viewModels.HomeViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BythewayApp() {
-    val homeViewModel: HomeViewModel = viewModel()
+    val homeViewModel = hiltViewModel<HomeViewModel>()
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -28,6 +26,7 @@ fun BythewayApp() {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
+
             HomeScreen(
                 bythewayUiSate = homeViewModel.bythewayUiSate,
                 contentPadding = PaddingValues(
@@ -37,6 +36,7 @@ fun BythewayApp() {
                     end = 16.dp
                 )
             )
+
         }
     }
 }

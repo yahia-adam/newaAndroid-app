@@ -2,72 +2,121 @@ package com.bythewayapp.model
 
 import com.google.gson.annotations.SerializedName
 
-
-data class TicketmasterResponse(
+class TicketmasterResponse(
     @SerializedName("_links") val links: TicketmasterLinks?,
     @SerializedName("_embedded") val embedded: TicketmasterEmbedded?,
     val page: TicketmasterPage?
 )
 
-data class TicketmasterLinks(
+class TicketmasterLinks(
     val self: TicketmasterLink,
     val next: TicketmasterLink
 )
 
-data class TicketmasterEmbedded(
+class TicketmasterEmbedded(
     val events: List<Event>
 )
 
-data class TicketmasterPage(
+class TicketmasterPage(
     val size: Int,
     val totalElements: Int,
     val totalPages: Int,
     val number: Int
 )
 
-data class Event(
-    val location: TicketmasterLocation?,
+class Event(
     val id: String,
     val name: String,
     val description: String?,
     val url: String?,
     val images: List<TicketMasterImages>?,
     val dates: TicketmasterDates?,
-    val priceRange: TicketmasterPriceRange?,
-    val place: TicketmasterPlace?
+    val priceRanges: List<TicketmasterPriceRange>?,
+    val classifications: List<TicketmasterClassification>?,
+    @SerializedName("_embedded") val embedded: TicketMasterEmbeddedVenue?,
+) {
+
+    fun isValidEvent():Boolean {
+        if (images?.size == 0) return false
+        if (url == null) return false
+        if (classifications?.size == 0) return false
+        if (priceRanges?.size == 0) return false
+        if (dates?.status?.code != StatusCode.ON_SALE) return false
+        return true
+    }
+
+    fun getTags(): List<String> {
+        val tags = mutableSetOf<String>()
+
+        classifications?.forEach { c ->
+            c.segment?.name?.let { tags.add(it) }
+            c.genre?.name?.let { tags.add(it) }
+            c.subGenre?.name?.let { tags.add(it) }
+        }
+
+        return tags.toList()
+    }
+}
+
+class TicketMasterEmbeddedVenue(
+    val venues: List<TicketMasterVenue>,
 )
 
-
-data class TicketmasterPlace(
-    val address: TicketmasterAddress,
-    val city: TicketmasterCity,
+class TicketMasterVenue(
+    val name: String,
     val postalCode: String,
-    val location: TicketmasterLocation
+    val city: TicketmasterCity,
+    val address: TicketmasterAddress,
+    val location: TicketmasterLocation,
 )
 
-data class TicketmasterAddress(
-    val line1: String,
-    val line2: String
+class TicketmasterClassification(
+    val segment: TicketmasterSegment?,
+    val genre: TicketmasterGenre?,
+    val subGenre: TicketmasterSubGenre?,
 )
 
-data class TicketmasterCity(
+class TicketmasterSegment(
+    val genres: List<TicketmasterGenre>?,
+    val id: String,
+    val name: String,
+    val locale: String
+)
+
+class TicketmasterGenre(
+    val id: String,
+    val name: String,
+    val locale: String,
+)
+
+class TicketmasterSubGenre(
+    val id: String,
+    val name: String,
+    val locale: String
+)
+
+class TicketmasterAddress(
+    val line1: String?,
+)
+
+class TicketmasterCity(
     val name: String
 )
 
-data class TicketmasterPriceRange(
+class TicketmasterPriceRange(
     val type: String,
     val currency: String,
     val min: Double,
     val max: Double
 )
 
-data class TicketmasterDates(
+class TicketmasterDates(
     val start: TicketmasterDate,
     val end: TicketmasterDate,
     val status: TicketmasterStatus
 )
 
-data class TicketmasterStatus(
+class TicketmasterStatus(
     val code: StatusCode
 )
 
@@ -79,23 +128,23 @@ enum class StatusCode {
     @SerializedName("rescheduled") RESCHEDULED
 }
 
-data class TicketmasterDate(
+class TicketmasterDate(
     val localDate: String,
     val dateTime: String
 )
 
-data class TicketMasterImages(
+class TicketMasterImages(
     val url: String,
     val fallback: Boolean,
     val attribution: String
 )
 
-data class TicketmasterLocation(
+class TicketmasterLocation(
     val longitude: Float,
     val latitude: Float
 )
 
-data class TicketmasterLink(
+class TicketmasterLink(
     val link: String,
     val templated: Boolean
 )

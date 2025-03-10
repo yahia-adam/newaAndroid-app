@@ -11,15 +11,15 @@ val localProperties = Properties().apply {
 // for local dev
 fun getApiKey() = localProperties.getProperty("TICKETMASTER_API_KEY")
     ?: System.getenv("TICKETMASTER_API_KEY")
-    ?: throw GradleException("API_KEY not found")
+    ?: throw GradleException("TICKETMASTER_API_KEY not found, add it in local properities")
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 
     // Dependency injection with Hilt
-    //alias(libs.plugins.dagger.hilt.android)
-    //id("kotlin-kapt")
+    alias(libs.plugins.dagger.hilt.android)
+    id("kotlin-kapt")
 }
 
 android {
@@ -73,11 +73,16 @@ android {
     }
 
     // Dependency injection with Hilt
-    //kapt {
-    //    correctErrorTypes = true
-    //}
+    kapt {
+        correctErrorTypes = true
+    }
 
     buildToolsVersion = "35.0.0"
+
+    hilt {
+        enableAggregatingTask = false
+    }
+
 }
 
 dependencies {
@@ -106,6 +111,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // Dependency injection with Hilt
-    //implementation(libs.hilt.android)
-    //kapt(libs.hilt.android.compiler)
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Navigation with jet pack compose
+    implementation(libs.androidx.navigation.compose)
 }
