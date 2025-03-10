@@ -11,14 +11,15 @@ val localProperties = Properties().apply {
 // for local dev
 fun getApiKey() = localProperties.getProperty("TICKETMASTER_API_KEY")
     ?: System.getenv("TICKETMASTER_API_KEY")
-    ?: throw GradleException("API_KEY not found")
+    ?: throw GradleException("TICKETMASTER_API_KEY not found, add it in local properities")
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.compose.compiler)
+
     // Dependency injection with Hilt
-    kotlin("kapt")
+    alias(libs.plugins.dagger.hilt.android)
+    id("kotlin-kapt")
 }
 
 android {
@@ -71,10 +72,21 @@ android {
         }
     }
 
+    // Dependency injection with Hilt
+    kapt {
+        correctErrorTypes = true
+    }
+
     buildToolsVersion = "35.0.0"
+
+    hilt {
+        enableAggregatingTask = false
+    }
+
 }
 
 dependencies {
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -90,17 +102,22 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
     // Retrofit2
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+
     // viewModel lifecycle
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     // Dependency injection with Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.android.compiler)
-    implementation (libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.navigation.compose)
+
     // privy
-    implementation(libs.privy.core)
+    //implementation(libs.privy.core)
+
     // Navigation with jet pack compose
     implementation(libs.androidx.navigation.compose)
 }

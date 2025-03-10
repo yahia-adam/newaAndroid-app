@@ -38,9 +38,9 @@ fun AppNavHost(
         navController = navController,
         startDestination = startDestination
     ) {
-       composable(NavigationItem.PrivyLoginEmailStart.route) {
+        composable(NavigationItem.PrivyLoginEmailStart.route) {
             PrivyLoginEmailStartScreen(navController = navController)
-       }
+        }
         composable(
             NavigationItem.PrivyLoginEmailEnd.route,
             arguments = listOf(

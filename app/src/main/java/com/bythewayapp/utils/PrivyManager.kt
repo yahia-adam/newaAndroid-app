@@ -1,13 +1,13 @@
 package com.bythewayapp.utils
-
+/*
 import android.content.Context
 import android.util.Log
 import io.privy.logging.PrivyLogLevel
 import io.privy.sdk.Privy
 import io.privy.sdk.PrivyConfig
-
+*/
 object PrivyManager {
-    private var privy: Privy? = null
+/*    private var privy: Privy? = null
 
     fun init(context: Context) {
         if (privy == null) {
@@ -29,5 +29,5 @@ object PrivyManager {
 
     fun getInstance(): Privy {
         return privy ?: throw IllegalStateException("Privy not initialized")
-    }
+    }*/
 }
