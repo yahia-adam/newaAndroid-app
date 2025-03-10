@@ -26,14 +26,13 @@ class HomeViewModel @Inject constructor(
     private val eventRepository: EventRepository,
     private val context: Context
 ) : ViewModel() {
+
     companion object {
         const val DEFAULT_SIZE = "200"
         const val DEFAULT_CITY = "Paris"
     }
 
-    var bythewayUiSate: BythewayUiSate
-
-            by mutableStateOf(BythewayUiSate.Loading)
+    var bythewayUiSate: BythewayUiSate by mutableStateOf(BythewayUiSate.Loading)
         private set
 
     init {
