@@ -20,6 +20,9 @@ plugins {
     // Dependency injection with Hilt
     alias(libs.plugins.dagger.hilt.android)
     id("kotlin-kapt")
+
+    // kotlin 2
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -116,7 +119,7 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 
     // privy
-    //implementation(libs.privy.core)
+    implementation(libs.privy.core)
 
     // Navigation with jet pack compose
     implementation(libs.androidx.navigation.compose)

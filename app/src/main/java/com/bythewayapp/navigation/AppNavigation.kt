@@ -38,9 +38,10 @@ fun AppNavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        /*
         composable(NavigationItem.PrivyLoginEmailStart.route) {
             PrivyLoginEmailStartScreen(navController = navController)
-        }
+        }*/
         composable(
             NavigationItem.PrivyLoginEmailEnd.route,
             arguments = listOf(
@@ -49,8 +50,6 @@ fun AppNavHost(
         ) { backStackEntry ->
             val userEmail = backStackEntry.arguments?.getString("userEmail") ?: ""
             PrivyLoginEmailEndScreen(
-                navController = navController,
-                email = userEmail
             )
         }
     }
