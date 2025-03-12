@@ -7,8 +7,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.bythewayapp.ui.screens.PrivyLoginEmailEndScreen
-import com.bythewayapp.ui.screens.PrivyLoginEmailStartScreen
 import com.bythewayapp.ui.theme.screens.HomeScreen
 
 enum class Screen {
@@ -42,7 +40,7 @@ fun AppNavHost(
         composable(NavigationItem.PrivyLoginEmailStart.route) {
             PrivyLoginEmailStartScreen(navController = navController)
         }*/
-        composable(
+         /*composable(
             NavigationItem.PrivyLoginEmailEnd.route,
             arguments = listOf(
                 navArgument("userEmail") {type = NavType.StringType}
@@ -51,6 +49,6 @@ fun AppNavHost(
             val userEmail = backStackEntry.arguments?.getString("userEmail") ?: ""
             PrivyLoginEmailEndScreen(
             )
-        }
+        }*/
     }
 }

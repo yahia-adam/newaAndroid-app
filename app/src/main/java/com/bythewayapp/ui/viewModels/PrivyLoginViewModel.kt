@@ -1,155 +1,106 @@
 package com.bythewayapp.ui.viewModels
 
-import android.content.Context
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.bythewayapp.R
-import com.bythewayapp.data.EventRepository
-import com.bythewayapp.utils.ConnectionState
-import com.bythewayapp.utils.ConnectionStateManager
-import com.bythewayapp.utils.PrivyManager
-import com.bythewayapp.utils.PrivyState
+import com.bythewayapp.core.PrivyManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.privy.auth.PrivyUser
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed class PrivyLoginUiState {
     object Loading : PrivyLoginUiState()
     object Ready : PrivyLoginUiState()
+    data class OTPSent(val email: String) : PrivyLoginUiState()
+    object Success : PrivyLoginUiState()
     data class Error(val message: String) : PrivyLoginUiState()
 }
 
 @HiltViewModel
 class PrivyLoginViewModel @Inject constructor(
-    private val context: Context,
-    private val privyManager: PrivyManager,
-    private val connectivityManager: ConnectionStateManager
+    private val privyManager: PrivyManager
 ) : ViewModel() {
 
-    val connectionState = connectivityManager.connectionState
-    val privyState = privyManager.state
-
-    private val _emailState = MutableStateFlow("")
-    val emailState = _emailState.asStateFlow()
-
-    private val _otpState = MutableStateFlow("")
-    val otpState = _otpState.asStateFlow()
-
-    // Utilisateur authentifié
-    private val _user = MutableStateFlow<PrivyUser?>(null)
-    val user = _user.asStateFlow()
-
-    var privyLoginUiState: PrivyLoginUiState by mutableStateOf(PrivyLoginUiState.Loading)
+    var uiState by mutableStateOf<PrivyLoginUiState>(PrivyLoginUiState.Ready)
         private set
 
-    fun updateEmail(email: String) {
-        _emailState.value = email
+    var email by mutableStateOf("")
+        private set
+
+    var otpCode by mutableStateOf("")
+        private set
+
+    init {
+        // Start observing auth state
+        privyManager.observeAuthState()
     }
 
-    fun updateOtp(otp: String) {
-        _otpState.value = otp
+    fun updateEmail(newEmail: String) {
+        email = newEmail
+    }
+
+    fun updateOtpCode(newCode: String) {
+        otpCode = newCode
     }
 
     fun sendOTP() {
+        if (email.isBlank()) {
+            uiState = PrivyLoginUiState.Error("Email cannot be empty")
+            return
+        }
+
+        uiState = PrivyLoginUiState.Loading
         viewModelScope.launch {
-            privyLoginUiState = PrivyLoginUiState.Loading
-            try {
-                val email = _emailState.value
-                /*if (email.isBlank()) {
-                    _errorMessage.emit("Veuillez entrer une adresse email")
-                    return@launch
-                }*/
-
-                val result = privyManager.sendOTPCode(email)
-                result.fold(
-                    onSuccess = {
-                        privyLoginUiState = PrivyLoginUiState.Ready
-
-                        //_successMessage.emit("Code envoyé avec succès à $email")
-                    },
-                    onFailure = { error ->
-                        //_errorMessage.emit(error.message ?: "Échec d'envoi du code OTP")
-                    }
-                )
-            } catch (e: Exception) {
-                //_errorMessage.emit(e.message ?: "Une erreur inattendue s'est produite")
-            } finally {
-                //_isLoading.value = false
-            }
+            privyManager.sendOTPCode(email).fold(
+                onSuccess = {
+                    uiState = PrivyLoginUiState.OTPSent(email)
+                },
+                onFailure = { exception ->
+                    Log.e("PrivyLoginViewModel", "Error sending OTP", exception)
+                    uiState = PrivyLoginUiState.Error("Failed to send verification code: ${exception.message}")
+                }
+            )
         }
     }
 
     fun verifyOTP() {
-        viewModelScope.launch {
-            privyLoginUiState = PrivyLoginUiState.Loading
-            try {
-                val email = _emailState.value
-                val otp = _otpState.value
-    /*
-                if (email.isBlank()) {
-                    _errorMessage.emit("Veuillez entrer une adresse email")
-                    return@launch
-                }
+        if (otpCode.isBlank()) {
+            uiState = PrivyLoginUiState.Error("Verification code cannot be empty")
+            return
+        }
 
-                if (otp.isBlank()) {
-                    _errorMessage.emit("Veuillez entrer le code OTP")
-                    return@launch
-                }
-*/
-                val result = privyManager.verifyOTPCode(email, otp)
-                result.fold(
-                    onSuccess = { user ->
-                        _user.value = user
-                        //_isAuthenticated.value = true
-                        //_successMessage.emit("Authentification réussie")
-                    },
-                    onFailure = { error ->
-                        //_errorMessage.emit(error.message ?: "Échec de vérification du code OTP")
+        uiState = PrivyLoginUiState.Loading
+        viewModelScope.launch {
+            privyManager.verifyOTPCode(email, otpCode).fold(
+                onSuccess = { user ->
+                    if (user != null) {
+                        uiState = PrivyLoginUiState.Success
+                    } else {
+                        uiState = PrivyLoginUiState.Error("Authentication failed: User is null")
                     }
-                )
-            } catch (e: Exception) {
-                //_errorMessage.emit(e.message ?: "Une erreur inattendue s'est produite")
-            } finally {
-                //_isLoading.value = false
-            }
+                },
+                onFailure = { exception ->
+                    Log.e("PrivyLoginViewModel", "Error verifying OTP", exception)
+                    uiState = PrivyLoginUiState.Error("Failed to verify code: ${exception.message}")
+                }
+            )
         }
     }
 
-    val uiState: StateFlow<PrivyLoginUiState> = combine(
-        connectionState,
-        privyState
-    ) { connectionState, privyState ->
-        when {
-            connectionState is ConnectionState.Unavailable -> PrivyLoginUiState.Error(context.getString(R.string.erreur_de_connexion))
-            privyState is PrivyState.Error -> PrivyLoginUiState.Error((privyState ?: "Une erreur est survenue").toString())
-            privyState is PrivyState.Uninitialized -> PrivyLoginUiState.Loading
-            privyState is PrivyState.Initialized -> PrivyLoginUiState.Ready
-            else -> PrivyLoginUiState.Loading
-        }
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(5000),
-        PrivyLoginUiState.Loading
-    )
+    fun resendOTP() {
+        sendOTP()
+    }
+
+    fun goBackToEmailInput() {
+        otpCode = ""
+        uiState = PrivyLoginUiState.Ready
+    }
 
     fun retry() {
-        privyManager.reinitialize()
-    }
-
-    fun sendEmail() {
-        val privyInstance = privyManager.getInstance()
-        if (privyInstance != null) {
-
-        }
+        uiState = PrivyLoginUiState.Ready
     }
 }

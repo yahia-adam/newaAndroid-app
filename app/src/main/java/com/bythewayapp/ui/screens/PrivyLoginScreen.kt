@@ -11,24 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.bythewayapp.ui.componets.MyEmailTextField
 import com.bythewayapp.ui.componets.MyOptCodeTextField
 import com.bythewayapp.ui.componets.PrimaryButton
@@ -39,9 +29,11 @@ import com.bythewayapp.ui.viewModels.PrivyLoginViewModel
 
 @Composable
 fun PrivyLoginEmailStartScreenContent(
+    email: String,
+    onEmailChanged: (String) -> Unit,
+    onSendEmail: () -> Unit,
     modifier: Modifier = Modifier,
-    sendEmail: () -> Unit = {},
-    contentPadding: PaddingValues = PaddingValues(0.dp)
+    contentPadding: PaddingValues = PaddingValues(16.dp)
 ) {
     Column (
         modifier = modifier
@@ -50,141 +42,130 @@ fun PrivyLoginEmailStartScreenContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        var email by remember {
-            mutableStateOf("")
-        }
         Text(text = "Connection par email")
 
         Spacer(modifier = Modifier.height(16.dp))
 
         MyEmailTextField (
             modifier = Modifier,
-            email,
-            onEmailChanged = {
-                email = it
-            }
+            email = email,
+            onEmailChanged = onEmailChanged
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         PrimaryButton(
             modifier = Modifier,
-            onclick = sendEmail,
-            "Suivant"
+            onclick = onSendEmail,
+            text = "Suivant"
         )
     }
 }
 
 @Composable
-@Preview(showBackground = true)
 fun PrivyLoginEmailEndScreenContent(
+    otpCode: String,
+    onCodeChanged: (String) -> Unit,
+    onVerifyCode: () -> Unit,
+    onResendCode: () -> Unit,
+    onGoBack: () -> Unit,
+    email: String,
     modifier: Modifier = Modifier,
-    verifyCode: () -> Unit = {},
-    resendCode: () -> Unit = {},
-    goBack: () -> Unit = {},
-    contentPadding: PaddingValues = PaddingValues(0.dp),
+    contentPadding: PaddingValues = PaddingValues(16.dp),
 ) {
     Column (
         modifier = modifier
             .fillMaxSize()
             .padding(contentPadding),
-
-        ) {
+    ) {
         Row (
             modifier = Modifier.padding(16.dp)
         ){
-            Icon(Icons.AutoMirrored.Default.ArrowBack,
-                contentDescription = "arrow back icons",
-                modifier = Modifier.clickable{
-                    goBack
-                }
+            Icon(
+                Icons.AutoMirrored.Default.ArrowBack,
+                contentDescription = "Go back",
+                modifier = Modifier.clickable { onGoBack() }
             )
         }
 
         Column (
-            modifier = modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            var optCode by remember {
-                mutableStateOf("")
-            }
-
             Text(text = "Vérification du code")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(text = "Un code a été envoyé à $email")
 
             Spacer(modifier = Modifier.height(16.dp))
 
             MyOptCodeTextField(
                 modifier = Modifier,
-                optCode,
-                onCodeChanged = {
-                    optCode = it
-                }
+                code = otpCode,
+                onCodeChanged = onCodeChanged
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryButton(
                 modifier = Modifier,
-                onclick = verifyCode,
-                "Vérifier"
+                onclick = onVerifyCode,
+                text = "Vérifier"
             )
 
             Spacer(Modifier.height(16.dp))
 
             Text(
                 text = "Renvoyer le code",
-                modifier = Modifier.clickable {
-                    resendCode
-                }
+                modifier = Modifier.clickable { onResendCode() }
             )
         }
     }
 }
 
 @Composable
-fun PrivyLoginEmailStartScreen(
-    viewModel: PrivyLoginViewModel = hiltViewModel<PrivyLoginViewModel>(),
+fun PrivyLoginScreen(
+    onLoginSuccess: () -> Unit,
+    viewModel: PrivyLoginViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
     val uiState = viewModel.uiState
 
-    when (val currentState = uiState) {
+    when (uiState) {
         is PrivyLoginUiState.Loading -> LoadingScreen()
+
         is PrivyLoginUiState.Error -> ErrorScreen(
-            errorMessage = currentState.message,
+            errorMessage = uiState.message,
             retryAction = { viewModel.retry() }
         )
+
         is PrivyLoginUiState.Ready -> PrivyLoginEmailStartScreenContent(
-            modifier = Modifier,
-            sendEmail = {},
+            email = viewModel.email,
+            onEmailChanged = { viewModel.updateEmail(it) },
+            onSendEmail = { viewModel.sendOTP() },
+            modifier = modifier,
             contentPadding = contentPadding
         )
-    }
-}
 
-@Composable
-fun PrivyLoginEmailEndScreen(
-    viewModel: PrivyLoginViewModel = hiltViewModel<PrivyLoginViewModel>(),
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(0.dp)
-) {
-    val uiState = viewModel.uiState
-
-    when (val currentState = uiState) {
-        is PrivyLoginUiState.Loading -> LoadingScreen()
-        is PrivyLoginUiState.Error -> ErrorScreen(
-            errorMessage = currentState.message,
-            retryAction = { viewModel.retry() }
-        )
-        is PrivyLoginUiState.Ready -> PrivyLoginEmailEndScreenContent(
-            modifier = Modifier,
-            verifyCode = {},
-            resendCode = {},
-            goBack = {},
+        is PrivyLoginUiState.OTPSent -> PrivyLoginEmailEndScreenContent(
+            otpCode = viewModel.otpCode,
+            onCodeChanged = { viewModel.updateOtpCode(it) },
+            onVerifyCode = { viewModel.verifyOTP() },
+            onResendCode = { viewModel.resendOTP() },
+            onGoBack = { viewModel.goBackToEmailInput() },
+            email = uiState.email,
+            modifier = modifier,
             contentPadding = contentPadding
         )
+
+        is PrivyLoginUiState.Success -> {
+            LaunchedEffect(Unit) {
+                onLoginSuccess()
+            }
+            LoadingScreen() // Show loading while redirecting
+        }
     }
 }

@@ -14,11 +14,14 @@ import com.bythewayapp.ui.theme.screens.HomeScreen
 import com.bythewayapp.ui.viewModels.HomeViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bythewayapp.ui.screens.PrivyLoginEmailStartScreenContent
+import com.bythewayapp.ui.screens.PrivyLoginScreen
+import com.bythewayapp.ui.viewModels.PrivyLoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BythewayApp() {
-//    val homeViewModel = hiltViewModel<HomeViewModel>()
+    val homeViewModel = hiltViewModel<HomeViewModel>()
+    val privyLoginViewModel = hiltViewModel<PrivyLoginViewModel>()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
@@ -27,8 +30,8 @@ fun BythewayApp() {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
-/*
-            HomeScreen(
+
+            /*HomeScreen(
                 bythewayUiSate = homeViewModel.bythewayUiSate,
                 contentPadding = PaddingValues(
                     top = innerPadding.calculateTopPadding(),
@@ -38,7 +41,8 @@ fun BythewayApp() {
                 )
             )
 */
-            PrivyLoginEmailStartScreenContent(
+            PrivyLoginScreen(
+                onLoginSuccess = {},
                 modifier = Modifier,
                 contentPadding = PaddingValues(
                     top = innerPadding.calculateTopPadding(),
@@ -49,4 +53,5 @@ fun BythewayApp() {
             )
         }
     }
+
 }

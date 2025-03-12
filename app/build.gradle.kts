@@ -31,7 +31,7 @@ android {
 
     defaultConfig {
         applicationId = "com.bythewayapp"
-        minSdk = 27
+        minSdk = 29
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
@@ -123,4 +123,9 @@ dependencies {
 
     // Navigation with jet pack compose
     implementation(libs.androidx.navigation.compose)
+
+    // Add mapbox
+    implementation("com.mapbox.maps:android:11.10.2")
+    // If you're using compose also add the compose extension
+    implementation("com.mapbox.extension:maps-compose:11.10.2")
 }

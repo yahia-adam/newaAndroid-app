@@ -3,8 +3,8 @@ package com.bythewayapp.di
 import android.app.Application
 import android.content.Context
 import com.bythewayapp.ByTheWayApplication
-import com.bythewayapp.utils.ConnectionStateManager
-import com.bythewayapp.utils.PrivyManager
+import com.bythewayapp.core.ConnectionStateManager
+import com.bythewayapp.core.PrivyManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -29,9 +29,8 @@ object AppModule {
     @Singleton
     fun providePrivyManager(
         @ApplicationContext context: Context,
-        connectionStateManager: ConnectionStateManager
     ): PrivyManager {
-        return PrivyManager(context, connectionStateManager)
+        return PrivyManager(context)
     }
 
     @Provides

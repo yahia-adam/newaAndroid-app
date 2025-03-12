@@ -13,21 +13,28 @@ import androidx.compose.ui.unit.dp
 import com.bythewayapp.ui.viewModels.BythewayUiSate
 import com.bythewayapp.ui.screens.utils.ErrorScreen
 import com.bythewayapp.ui.screens.utils.LoadingScreen
+import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
+import com.mapbox.geojson.Point
+import com.mapbox.maps.extension.compose.MapboxMap
+
 @Composable
 fun ResultScreen(
     events: String,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    Column (
-        modifier = modifier
-            .fillMaxSize()
+    MapboxMap(
+        Modifier.fillMaxSize()
             .padding(contentPadding),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = events)
-    }
+        mapViewportState = rememberMapViewportState {
+            setCameraOptions {
+                zoom(2.0)
+                center(Point.fromLngLat(-98.0, 39.5))
+                pitch(0.0)
+                bearing(0.0)
+            }
+        },
+    )
 }
 
 @Composable

@@ -1,4 +1,4 @@
-package com.bythewayapp.utils
+package com.bythewayapp.core
 
 import android.content.Context
 import android.net.ConnectivityManager
@@ -10,11 +10,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import android.util.Log
 
 @Singleton
 class ConnectionStateManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    private val TAG = "ConnectionStateManager"
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     // État de la connexion exposé via StateFlow
@@ -23,7 +25,7 @@ class ConnectionStateManager @Inject constructor(
 
     private fun getInitialConnectionState(): ConnectionState {
         val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-        return if (networkCapabilities != null &&
+        val initialState = if (networkCapabilities != null &&
             (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
                     networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR))
         ) {
@@ -31,19 +33,25 @@ class ConnectionStateManager @Inject constructor(
         } else {
             ConnectionState.Unavailable
         }
+
+        Log.d(TAG, "Initial connection state: $initialState")
+        return initialState
     }
 
     init {
+        Log.d(TAG, "Initializing ConnectionStateManager")
         observeNetworkChanges()
     }
 
     private fun observeNetworkChanges() {
         val networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
+                Log.d(TAG, "Network available")
                 _connectionState.value = ConnectionState.Available
             }
 
             override fun onLost(network: Network) {
+                Log.d(TAG, "Network lost")
                 _connectionState.value = ConnectionState.Unavailable
             }
 
@@ -52,6 +60,8 @@ class ConnectionStateManager @Inject constructor(
                 networkCapabilities: NetworkCapabilities
             ) {
                 val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                Log.d(TAG, "Network capabilities changed, hasInternet=$hasInternet")
+
                 if (hasInternet) {
                     _connectionState.value = ConnectionState.Available
                 } else {
@@ -61,11 +71,16 @@ class ConnectionStateManager @Inject constructor(
         }
 
         val networkRequest = NetworkRequest.Builder().build()
+        Log.d(TAG, "Registering network callback")
         connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
     }
 }
 
 sealed class ConnectionState {
-    object Available : ConnectionState()
-    object Unavailable : ConnectionState()
+    object Available : ConnectionState() {
+        override fun toString(): String = "Available"
+    }
+    object Unavailable : ConnectionState() {
+        override fun toString(): String = "Unavailable"
+    }
 }
