@@ -6,17 +6,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.bythewayapp.core.PrivyAuthState
 import com.bythewayapp.core.PrivyManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.privy.auth.PrivyUser
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed class PrivyLoginUiState {
-    object Loading : PrivyLoginUiState()
-    object Ready : PrivyLoginUiState()
+    data object Loading : PrivyLoginUiState()
+    data object Ready : PrivyLoginUiState()
     data class OTPSent(val email: String) : PrivyLoginUiState()
-    object Success : PrivyLoginUiState()
+    data object Success : PrivyLoginUiState()
     data class Error(val message: String) : PrivyLoginUiState()
 }
 
@@ -25,6 +27,7 @@ class PrivyLoginViewModel @Inject constructor(
     private val privyManager: PrivyManager
 ) : ViewModel() {
 
+    private val TAG = "PrivyLoginViewModel"
     var uiState by mutableStateOf<PrivyLoginUiState>(PrivyLoginUiState.Ready)
         private set
 
@@ -35,8 +38,18 @@ class PrivyLoginViewModel @Inject constructor(
         private set
 
     init {
-        // Start observing auth state
-        privyManager.observeAuthState()
+        viewModelScope.launch {
+            privyManager.observeAuthState()
+            privyManager.authState.collectLatest { authState ->
+                if (authState == PrivyAuthState.Authenticated) {
+                    uiState = PrivyLoginUiState.Success
+                    Log.d(TAG, "User already authenticated, redirecting to home")
+                } else if (authState == PrivyAuthState.Unauthenticated) {
+                    uiState = PrivyLoginUiState.Ready
+                    Log.d(TAG, "User not authenticated, showing login screen")
+                }
+            }
+        }
     }
 
     fun updateEmail(newEmail: String) {
@@ -48,7 +61,10 @@ class PrivyLoginViewModel @Inject constructor(
     }
 
     fun sendOTP() {
+        Log.d(TAG, "Enter send opt code")
+
         if (email.isBlank()) {
+            Log.e(TAG, "Email cannot be empty")
             uiState = PrivyLoginUiState.Error("Email cannot be empty")
             return
         }
@@ -57,10 +73,11 @@ class PrivyLoginViewModel @Inject constructor(
         viewModelScope.launch {
             privyManager.sendOTPCode(email).fold(
                 onSuccess = {
+                    Log.d(TAG, "Opt sended succesffuly")
                     uiState = PrivyLoginUiState.OTPSent(email)
                 },
                 onFailure = { exception ->
-                    Log.e("PrivyLoginViewModel", "Error sending OTP", exception)
+                    Log.e(TAG, "Error sending OTP", exception)
                     uiState = PrivyLoginUiState.Error("Failed to send verification code: ${exception.message}")
                 }
             )
@@ -84,7 +101,7 @@ class PrivyLoginViewModel @Inject constructor(
                     }
                 },
                 onFailure = { exception ->
-                    Log.e("PrivyLoginViewModel", "Error verifying OTP", exception)
+                    Log.e(TAG, "Error verifying OTP", exception)
                     uiState = PrivyLoginUiState.Error("Failed to verify code: ${exception.message}")
                 }
             )

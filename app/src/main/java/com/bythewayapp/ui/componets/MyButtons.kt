@@ -15,7 +15,7 @@ fun PrimaryButton(
     Button(
         modifier = modifier,
         onClick = {
-            onclick
+            onclick()
         }
     ) {
         Text(text = text)

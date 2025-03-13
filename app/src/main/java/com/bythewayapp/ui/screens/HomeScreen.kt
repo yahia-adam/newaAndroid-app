@@ -10,9 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.bythewayapp.ui.viewModels.BythewayUiSate
 import com.bythewayapp.ui.screens.utils.ErrorScreen
 import com.bythewayapp.ui.screens.utils.LoadingScreen
+import com.bythewayapp.ui.viewModels.HomeViewModel
+import com.bythewayapp.ui.viewModels.PrivyLoginViewModel
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
 import com.mapbox.geojson.Point
 import com.mapbox.maps.extension.compose.MapboxMap
@@ -39,11 +42,11 @@ fun ResultScreen(
 
 @Composable
 fun HomeScreen(
-    bythewayUiSate: BythewayUiSate,
+    viewModel: HomeViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    when(bythewayUiSate) {
+    when(val bythewayUiSate = viewModel.bythewayUiSate) {
         is BythewayUiSate.Success -> {
             ResultScreen(
                 bythewayUiSate.events,

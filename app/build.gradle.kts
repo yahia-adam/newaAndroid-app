@@ -30,7 +30,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.bythewayapp"
+        applicationId = "com.bytheway"
         minSdk = 29
         targetSdk = 35
         versionCode = 1

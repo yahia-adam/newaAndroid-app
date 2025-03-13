@@ -18,8 +18,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed class PrivyState {
-    object Initialized : PrivyState()
-    object Uninitialized : PrivyState()
+    data object Initialized : PrivyState()
+    data object Uninitialized : PrivyState()
     sealed class Error : PrivyState() {
         data class NetworkError(val exception: Exception? = null) : Error()
         data class ConfigError(val exception: Exception? = null) : Error()
@@ -28,14 +28,16 @@ sealed class PrivyState {
 }
 
 sealed class PrivyAuthState {
-    object Authenticated : PrivyAuthState()
-    object NotReady : PrivyAuthState()
-    object Unauthenticated : PrivyAuthState()
+    data object Authenticated : PrivyAuthState()
+    data object NotReady : PrivyAuthState()
+    data object Unauthenticated : PrivyAuthState()
 }
 
 class PrivyManager @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
+
+    private val TAG = "PrivyManager"
     private var privy: Privy? = null
     private var privyUser: PrivyUser? = null
 
@@ -59,9 +61,9 @@ class PrivyManager @Inject constructor(
                 )
             )
             _state.value = PrivyState.Initialized
-            Log.i("PRIVY", "Privy successfully initialized")
+            Log.i(TAG, "Privy successfully initialized")
         } catch (e: Exception) {
-            Log.e("PRIVY", "Error initializing Privy: ${e.message}")
+            Log.e(TAG, "Error initializing Privy: ${e.message}")
             _state.value = PrivyState.Error.ConfigError(e)
         }
     }
@@ -76,16 +78,16 @@ class PrivyManager @Inject constructor(
             val result = privy?.email?.sendCode(email = email)
             result?.fold(
                 onSuccess = {
-                    Log.d("PrivyManager", "Code OTP envoyé avec succès à $email")
+                    Log.d(TAG, "Code OTP envoyé avec succès à $email")
                     Result.success(Unit)
                 },
                 onFailure = { error ->
-                    Log.e("PrivyManager", "Échec d'envoi du code OTP: ${error.message}")
+                    Log.e(TAG, "Échec d'envoi du code OTP: ${error.message}")
                     Result.failure(error)
                 }
             ) ?: Result.failure(Exception("Privy n'est pas initialisé correctement"))
         } catch (e: Exception) {
-            Log.e("PrivyManager", "Exception lors de l'envoi du code OTP: ${e.message}")
+            Log.e(TAG, "Exception lors de l'envoi du code OTP: ${e.message}")
             Result.failure(e)
         }
     }
@@ -99,36 +101,36 @@ class PrivyManager @Inject constructor(
             )
             result?.fold(
                 onSuccess = { user ->
-                    Log.d("PrivyManager", "Vérification OTP réussie pour $email")
+                    Log.d(TAG, "Vérification OTP réussie pour $email")
                     privyUser = user
                     Result.success(user)
                 },
                 onFailure = { error ->
-                    Log.e("PrivyManager", "Échec de vérification OTP: ${error.message}")
+                    Log.e(TAG, "Échec de vérification OTP: ${error.message}")
                     Result.failure(error)
                 }
             ) ?: Result.failure(Exception("Privy n'est pas initialisé correctement"))
         } catch (e: Exception) {
-            Log.e("PrivyManager", "Exception lors de la vérification du code OTP: ${e.message}")
+            Log.e(TAG, "Exception lors de la vérification du code OTP: ${e.message}")
             Result.failure(e)
         }
     }
 
     // Collecte les mises à jour de l'état d'authentification
-    fun observeAuthState() {
+     suspend fun observeAuthState() {
         CoroutineScope(Dispatchers.IO).launch {
             privy?.authState?.collect { authState ->
                 when (authState) {
                     is AuthState.Authenticated -> {
-                        Log.d("PrivyManager", "User is authenticated")
+                        Log.d(TAG, "User is authenticated")
                         _authState.value = PrivyAuthState.Authenticated
                     }
                     AuthState.NotReady -> {
-                        Log.d("PrivyManager", "Auth state is not ready")
+                        Log.d(TAG, "Auth state is not ready")
                         _authState.value = PrivyAuthState.NotReady
                     }
                     AuthState.Unauthenticated -> {
-                        Log.d("PrivyManager", "User is not authenticated")
+                        Log.d(TAG, "User is not authenticated")
                         _authState.value = PrivyAuthState.Unauthenticated
                     }
                 }

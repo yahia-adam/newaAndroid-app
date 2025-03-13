@@ -134,6 +134,13 @@ fun PrivyLoginScreen(
 ) {
     val uiState = viewModel.uiState
 
+    // Handle automatic navigation to home when already authenticated
+    LaunchedEffect(uiState) {
+        if (uiState is PrivyLoginUiState.Success) {
+            onLoginSuccess()
+        }
+    }
+
     when (uiState) {
         is PrivyLoginUiState.Loading -> LoadingScreen()
 
@@ -162,10 +169,8 @@ fun PrivyLoginScreen(
         )
 
         is PrivyLoginUiState.Success -> {
-            LaunchedEffect(Unit) {
-                onLoginSuccess()
-            }
-            LoadingScreen() // Show loading while redirecting
+            // Just show loading while redirection happens via LaunchedEffect
+            LoadingScreen()
         }
     }
 }

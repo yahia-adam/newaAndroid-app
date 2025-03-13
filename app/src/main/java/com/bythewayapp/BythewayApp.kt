@@ -2,6 +2,7 @@ package com.bythewayapp
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -13,6 +14,9 @@ import androidx.compose.ui.unit.dp
 import com.bythewayapp.ui.theme.screens.HomeScreen
 import com.bythewayapp.ui.viewModels.HomeViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.rememberNavController
+import com.bythewayapp.navigation.AppNavHost
+import com.bythewayapp.navigation.NavigationItem
 import com.bythewayapp.ui.screens.PrivyLoginEmailStartScreenContent
 import com.bythewayapp.ui.screens.PrivyLoginScreen
 import com.bythewayapp.ui.viewModels.PrivyLoginViewModel
@@ -20,8 +24,7 @@ import com.bythewayapp.ui.viewModels.PrivyLoginViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BythewayApp() {
-    val homeViewModel = hiltViewModel<HomeViewModel>()
-    val privyLoginViewModel = hiltViewModel<PrivyLoginViewModel>()
+    val navController = rememberNavController()
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
@@ -30,26 +33,10 @@ fun BythewayApp() {
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
-
-            /*HomeScreen(
-                bythewayUiSate = homeViewModel.bythewayUiSate,
-                contentPadding = PaddingValues(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding(),
-                    start = 16.dp,
-                    end = 16.dp
-                )
-            )
-*/
-            PrivyLoginScreen(
-                onLoginSuccess = {},
-                modifier = Modifier,
-                contentPadding = PaddingValues(
-                    top = innerPadding.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding(),
-                    start = 16.dp,
-                    end = 16.dp
-                )
+            AppNavHost(
+                modifier = Modifier.padding(innerPadding),
+                navController = navController,
+                startDestination = NavigationItem.PrivyLogin.route
             )
         }
     }

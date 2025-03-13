@@ -7,21 +7,19 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.bythewayapp.ui.screens.PrivyLoginScreen
 import com.bythewayapp.ui.theme.screens.HomeScreen
 
 enum class Screen {
     HOME,
-    PRIVY_LOGIN_EMAIL_START,
-    PRIVY_LOGIN_EMAIL_END,
+    PRIVY_LOGIN,
 }
 
 sealed class NavigationItem(val route: String) {
 
     data object Home: NavigationItem(Screen.HOME.name)
 
-    data object PrivyLoginEmailStart: NavigationItem(Screen.PRIVY_LOGIN_EMAIL_START.name)
-
-    data object PrivyLoginEmailEnd: NavigationItem(Screen.PRIVY_LOGIN_EMAIL_END.name)
+    data object PrivyLogin: NavigationItem(Screen.PRIVY_LOGIN.name)
 }
 
 
@@ -36,19 +34,15 @@ fun AppNavHost(
         navController = navController,
         startDestination = startDestination
     ) {
-        /*
-        composable(NavigationItem.PrivyLoginEmailStart.route) {
-            PrivyLoginEmailStartScreen(navController = navController)
-        }*/
-         /*composable(
-            NavigationItem.PrivyLoginEmailEnd.route,
-            arguments = listOf(
-                navArgument("userEmail") {type = NavType.StringType}
+        composable(NavigationItem.Home.route) {
+            HomeScreen()
+        }
+        composable(NavigationItem.PrivyLogin.route) {
+            PrivyLoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(NavigationItem.Home.route)
+                }
             )
-        ) { backStackEntry ->
-            val userEmail = backStackEntry.arguments?.getString("userEmail") ?: ""
-            PrivyLoginEmailEndScreen(
-            )
-        }*/
+        }
     }
 }

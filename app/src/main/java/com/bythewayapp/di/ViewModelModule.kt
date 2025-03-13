@@ -31,7 +31,7 @@ class ViewModelModule {
         privyManager: PrivyManager,
     ): PrivyLoginViewModel {
         return PrivyLoginViewModel(
-            privyManager,
+            privyManager
         )
     }
 }
