@@ -98,6 +98,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.core.i18n)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -126,6 +127,13 @@ dependencies {
 
     // Add mapbox
     implementation("com.mapbox.maps:android:11.10.2")
-    // If you're using compose also add the compose extension
+    implementation("androidx.webkit:webkit:1.13.0")
     implementation("com.mapbox.extension:maps-compose:11.10.2")
+
+    // location
+    implementation ("com.google.android.gms:play-services-location:21.3.0")
+    // geohash
+    implementation ("ch.hsr:geohash:1.4.0")
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+
 }

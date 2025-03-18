@@ -1,5 +1,6 @@
 package com.bythewayapp.di
 
+import com.bythewayapp.core.EventsFileLoader
 import com.bythewayapp.data.EventRepository
 import dagger.Module
 import dagger.Provides
@@ -10,11 +11,11 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object RepositoryModule {
-
     @Provides
     @Singleton
-    fun provideUserRepository(
+    fun provideEventRepository(
+        fileLoader: EventsFileLoader
     ): EventRepository {
-        return EventRepository()
+        return EventRepository(fileLoader)
     }
 }

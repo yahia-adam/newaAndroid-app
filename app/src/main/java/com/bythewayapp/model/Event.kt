@@ -1,6 +1,7 @@
 package com.bythewayapp.model
 
 import com.google.gson.annotations.SerializedName
+import com.mapbox.geojson.Point
 
 class TicketmasterResponse(
     @SerializedName("_links") val links: TicketmasterLinks?,
@@ -56,6 +57,11 @@ class Event(
 
         return tags.toList()
     }
+
+    fun getCoordinates() : Point {
+        return Point.fromLngLat(embedded?.venues?.get(0)?.location?.longitude ?: 0.0, embedded?.venues?.get(0)?.location?.latitude ?: 0.0)
+    }
+
 }
 
 class TicketMasterEmbeddedVenue(
@@ -140,8 +146,8 @@ class TicketMasterImages(
 )
 
 class TicketmasterLocation(
-    val longitude: Float,
-    val latitude: Float
+    val longitude: Double,
+    val latitude: Double
 )
 
 class TicketmasterLink(

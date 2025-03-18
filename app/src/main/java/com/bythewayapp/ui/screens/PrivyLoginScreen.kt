@@ -22,8 +22,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.bythewayapp.ui.componets.MyEmailTextField
 import com.bythewayapp.ui.componets.MyOptCodeTextField
 import com.bythewayapp.ui.componets.PrimaryButton
-import com.bythewayapp.ui.screens.utils.ErrorScreen
 import com.bythewayapp.ui.screens.utils.LoadingScreen
+import com.bythewayapp.ui.screens.utils.UnknownErrorScreen
 import com.bythewayapp.ui.viewModels.PrivyLoginUiState
 import com.bythewayapp.ui.viewModels.PrivyLoginViewModel
 
@@ -144,7 +144,7 @@ fun PrivyLoginScreen(
     when (uiState) {
         is PrivyLoginUiState.Loading -> LoadingScreen()
 
-        is PrivyLoginUiState.Error -> ErrorScreen(
+        is PrivyLoginUiState.Error -> UnknownErrorScreen(
             errorMessage = uiState.message,
             retryAction = { viewModel.retry() }
         )

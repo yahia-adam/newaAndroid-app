@@ -6,4 +6,14 @@
     <string name="erreur_de_connexion">Erreur de connexion réseau, Veuillez Vérifier votre connexion Internet.</string>
     <string name="error_connection_lent">La requête est trop lente, Veuillez réessayer.</string>
     <string name="error_inconue">Une erreur a survenue, Veuillez Réessayer ou contacter notre support</string>
+
+    <string name="location_permission_denied">Pour vous montrer les événements à proximité, nous avons besoin de votre localisation. Vous pouvez l\'activer dans les paramètres de votre appareil.</string>
+    <string name="location_service_disabled">Les services de localisation sont désactivés sur votre appareil. Veuillez les activer dans les paramètres pour découvrir les événements près de chez vous.</string>
+    <string name="no_location_available">Nous n\'avons pas pu déterminer votre position. Vérifiez que vous êtes dans une zone avec une bonne réception GPS et réessayez.</string>
+    <string name="unknown_location_error">Un problème est survenu lors de l\'accès à votre localisation. Veuillez réessayer.</string>
+    <string name="location_required_title">Localisation nécessaire</string>
+    <string name="location_required_description">Pour vous montrer les événements à proximité, nous avons besoin de votre localisation.</string>
+    <string name="enable_location_instructions">Comment activer la géolocalisation :</string>
+    <string name="retry">Réessayer</string>
+    <string name="open_settings">Ouvrir les paramètres</string>
 </resources>

@@ -3,7 +3,11 @@ package com.bythewayapp.di
 import android.app.Application
 import android.content.Context
 import com.bythewayapp.ByTheWayApplication
+import com.bythewayapp.core.AndroidPermissionManager
 import com.bythewayapp.core.ConnectionStateManager
+import com.bythewayapp.core.EventsFileLoader
+import com.bythewayapp.core.LocationManager
+import com.bythewayapp.core.PermissionManager
 import com.bythewayapp.core.PrivyManager
 import dagger.Module
 import dagger.Provides
@@ -40,4 +44,30 @@ object AppModule {
     ): ConnectionStateManager {
         return ConnectionStateManager(context)
     }
+
+    @Provides
+    @Singleton
+    fun provideEventFileLoader(
+        @ApplicationContext context: Context,
+    ): EventsFileLoader {
+        return EventsFileLoader(context)
+    }
+
+    @Provides
+    @Singleton
+    fun ProvideAndroidPermissionManager(
+        @ApplicationContext context: Context,
+    ): PermissionManager {
+        return AndroidPermissionManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun ProvideLocationManager(
+        @ApplicationContext context: Context,
+        permissionManager: PermissionManager
+    ): LocationManager {  // Change return type to PermissionManager
+        return LocationManager(context, permissionManager)
+    }
+
 }

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.apple-mapkit.com/mk/5.x.x/mapkit.js"></script>
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+        mapkit.init({
+            authorizationCallback: function(done) {
+                done("eyJraWQiOiI0NzZNM1k3UTU3IiwidHlwIjoiSldUIiwiYWxnIjoiRVMyNTYifQ.eyJpc3MiOiJSRDZERE00TjI4IiwiaWF0IjoxNzQxNzk3NjY2LCJleHAiOjE3NDI0NTM5OTl9.ebLUrsLEVBPpLnxw7vg3XrU12w6qdLMq_ZjeJ6UvKYn9MgWM8YbvUUQZhooBkd0Hn2v77u6WGn4ZMGqbX3MwXA");
+            },
+            language: "fr"
+        });
+
+        // Création de la carte
+        const map = new mapkit.Map('map', {
+            center: new mapkit.Coordinate(48.8566, 2.3522),
+        });
+
+        window.addEventListener('load', function() {
+            var mapDiv = document.getElementById('map');
+            mapDiv.style.width = window.innerWidth + 'px';
+            mapDiv.style.height = window.innerHeight + 'px';
+        });
+
+
+    // Fonction pour ajouter un marqueur (appelable depuis Android)
+        window.addMarker = function(latitude, longitude, title) {
+            const coordinate = new mapkit.Coordinate(latitude, longitude);
+            const annotation = new mapkit.MarkerAnnotation(coordinate, {
+                title: title || "Marqueur",
+                subtitle: `${latitude}, ${longitude}`
+            });
+            map.addAnnotation(annotation);
+        };
+
+        window.addCircularMarker = function(latitude, longitude, images_url) {
+            const coordinate = new mapkit.Coordinate(latitude, longitude);
+
+            // Création d'un élément div pour le marqueur personnalisé
+            const element = document.createElement('div');
+            element.className = 'custom-circular-marker';
+            element.style.width = '40px';
+            element.style.height = '40px';
+            element.style.borderRadius = '50%';
+            element.style.overflow = 'hidden';
+            element.style.border = '2px solid white';
+            element.style.boxShadow = '0 2px 5px rgba(0,0,0,0.3)';
+            
+            // Création de l'image à l'intérieur du marqueur
+            const img = document.createElement('img');
+            img.src = images_url;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            
+            element.appendChild(img);
+            
+            // Création d'une annotation personnalisée avec l'élément div
+            const annotation = new mapkit.Annotation(coordinate, {
+                calloutEnabled: true, // Activer l'infobulle au clic
+                title: `Position: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
+                // Vous pouvez ajouter d'autres propriétés d'annotation si nécessaire
+                animates: true, // Animer l'apparition du marqueur
+                displayPriority: 1000, // Priorité d'affichage élevée
+                element: element
+            });
+        
+            // Ajout de l'annotation à la carte
+            map.addAnnotation(annotation);
+        
+            // Retourner l'annotation pour une référence ultérieure si nécessaire
+            return annotation;
+        };
+
+</script>
+</body>
+</html>
