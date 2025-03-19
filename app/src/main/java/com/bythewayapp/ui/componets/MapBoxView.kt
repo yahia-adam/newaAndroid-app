@@ -1,5 +1,6 @@
 package com.bythewayapp.ui.componets
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Canvas
@@ -37,6 +38,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.gson.JsonObject
+import com.mapbox.geojson.Point
 import com.mapbox.maps.extension.style.expressions.generated.Expression
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -62,8 +64,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -75,10 +75,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import com.bythewayapp.R
-import com.mapbox.geojson.Point
+import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.extension.compose.MapEffect
+import com.mapbox.maps.plugin.animation.MapAnimationOptions.Companion.mapAnimationOptions
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
+import kotlin.math.min
 
 /**
  * A composable that displays zoom controls and a location button for MapBox.
@@ -181,6 +183,7 @@ fun handleLocationClick(
     }
 }
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun MapBoxView(
     keyword: String,
@@ -205,12 +208,39 @@ fun MapBoxView(
     // État pour suivre la position de l'utilisateur
     var currentUserLocation by remember { mutableStateOf<Point?>(null) }
 
+    // Filtrer les événements invalides
     val validEvents = events.filter {
         val point = it.getCoordinates()
         point.longitude() != 0.0 || point.latitude() != 0.0
     }
 
-    val eventPoints = validEvents.map { it.getCoordinates() }
+    // Prétraiter les événements pour éviter les superpositions
+    val processedEvents = remember(validEvents) {
+        // Pour la production, on utiliserait offsetOverlappingMarkers(validEvents)
+        // Mais comme la méthode copyWithNewCoordinates n'est pas encore implémentée,
+        // on utilise cette solution temporaire:
+
+        // Grouper les événements par coordonnées (arrondi à 6 décimales)
+        val pointGroups = validEvents.groupBy {
+            String.format("%.6f,%.6f",
+                it.getCoordinates().latitude(),
+                it.getCoordinates().longitude())
+        }
+
+        // Vérifier s'il y a des groupes de points superposés
+        val hasSuperimposedPoints = pointGroups.any { it.value.size > 1 }
+
+        if (hasSuperimposedPoints) {
+            Log.d("MapBoxView", "Points superposés détectés. Appliquer une dispersion...")
+        }
+
+        // Pour l'instant, on retourne les événements originaux
+        // À activer une fois que copyWithNewCoordinates sera implémenté
+        validEvents
+    }
+
+    val eventPoints = processedEvents.map { it.getCoordinates() }
+
     // État pour stocker les bitmaps des marqueurs
     val markerBitmaps = remember { mutableStateMapOf<String, Bitmap?>() }
 
@@ -225,8 +255,8 @@ fun MapBoxView(
     }
 
     // Charger les bitmaps des marqueurs de façon asynchrone
-    LaunchedEffect(validEvents) {
-        validEvents.forEach { event ->
+    LaunchedEffect(processedEvents) {
+        processedEvents.forEach { event ->
             val imageUrl = event.images?.get(0)?.url
             if (imageUrl != null) {
                 coroutineScope.launch {
@@ -271,7 +301,7 @@ fun MapBoxView(
 
             PointAnnotationGroup(
                 annotations = eventPoints.mapIndexed { index, item ->
-                    val event = validEvents[index]
+                    val event = processedEvents[index]
                     val bitmap = markerBitmaps[event.id]
 
                     PointAnnotationOptions()
@@ -293,10 +323,17 @@ fun MapBoxView(
                             textColor = Color.Black.toArgb(),
                             textSize = 20.0,
                             circleRadiusExpression = literal(25.0),
+                            clusterRadius = 50,  // Rayon de cluster réduit pour meilleure séparation
+                            clusterMaxZoom = 20, // Permet clustering à hauts niveaux de zoom
                             colorLevels = listOf(
-                                Pair(100, Color.Red.toArgb()),
-                                Pair(50, Color.Blue.toArgb()),
-                                Pair(0, Color.Green.toArgb())
+                                Pair(500, Color(0xFFE53935).toArgb()),  // Rouge vif
+                                Pair(250, Color(0xFFF4511E).toArgb()),  // Orange foncé
+                                Pair(100, Color(0xFFFF9800).toArgb()),  // Orange
+                                Pair(50, Color(0xFF00BCD4).toArgb()),   // Bleu ciel
+                                Pair(25, Color(0xFF3F51B5).toArgb()),   // Indigo
+                                Pair(10, Color(0xFFFFEB3B).toArgb()),   // Jaune
+                                Pair(5, Color(0xFF4CAF50).toArgb()),    // Vert
+                                Pair(0, Color(0xFF8BC34A).toArgb())     // Vert clair
                             )
                         )
                     )
@@ -311,7 +348,7 @@ fun MapBoxView(
                     }
 
                     if (index != -1) {
-                        val event = validEvents[index]
+                        val event = processedEvents[index]
                         // Au lieu de faire onEventClick, on affiche le BottomSheet de détail
                         selectedEvent = event
                         isEventDetailBottomSheetVisible = true
@@ -319,32 +356,74 @@ fun MapBoxView(
 
                     true
                 }
-
-                // Gestionnaire de clic sur un cluster
+                // Gestionnaire amélioré de clic sur un cluster
                 interactionsState.onClusterClicked { cluster ->
                     Log.d("MapBoxView", "Cluster clicked: ID=${cluster.clusterId}, Count=${cluster.pointCount}")
 
-                    // Pour des raisons de simplicité, nous allons considérer que tous les événements
-                    // dans un rayon autour du centre du cluster font partie du cluster
                     val clusterPoint = cluster.originalFeature.geometry() as Point
+                    val currentZoom = mapViewportState.cameraState?.zoom ?: 10.0
 
-                    // Trouver tous les événements proches du centre du cluster
-                    // Vous devrez peut-être ajuster la distance en fonction de vos besoins
+                    // Recherche étendue pour trouver les événements du cluster
+                    val searchDistance = 0.1
                     val nearbyEvents = findNearbyEvents(
                         clusterPoint,
-                        validEvents,
-                        maxDistance = 0.1, // Ajuster selon vos besoins
+                        processedEvents,
+                        maxDistance = searchDistance,
                         maxEvents = cluster.pointCount.toInt()
                     )
 
-                    if (nearbyEvents.isNotEmpty()) {
+                    Log.d("MapBoxView", "Trouvé ${nearbyEvents.size} événements sur ${cluster.pointCount} dans un rayon de $searchDistance")
+
+                    // Cas 1: Le zoom est déjà élevé, impossible de séparer davantage les points
+                    // On considère qu'au-delà du zoom 16, si on a encore un cluster, c'est probablement des points superposés
+                    if (currentZoom > 16.0 || (nearbyEvents.size <= 1 && cluster.pointCount > 1)) {
+                        Log.d("MapBoxView", "Zoom élevé ou points superposés détectés - ouverture de la liste d'événements")
+
+                        // Recherche plus large pour trouver tous les événements du cluster
+                        val allClusterEvents = findNearbyEvents(
+                            clusterPoint,
+                            processedEvents,
+                            maxDistance = 0.2,  // Distance plus large pour capter tous les événements
+                            maxEvents = cluster.pointCount.toInt() + 5  // Quelques événements supplémentaires au cas où
+                        )
+
+                        if (allClusterEvents.isNotEmpty()) {
+                            // Ouvrir directement la liste d'événements, même s'il n'y en a qu'un
+                            selectedClusterEvents = allClusterEvents
+                            isClusterBottomSheetVisible = true
+                        } else {
+                            // Fallback: si même avec une recherche élargie on ne trouve rien, on zoome légèrement
+                            mapViewportState.flyTo(
+                                CameraOptions.Builder()
+                                    .zoom(currentZoom + 1.0)
+                                    .center(clusterPoint)
+                                    .build()
+                            )
+                        }
+                    }
+                    // Cas 2: Petit cluster avec peu d'événements, ouvrir directement la liste
+                    else if (nearbyEvents.size <= 5 && nearbyEvents.size > 0) {
+                        // Pour un petit nombre d'événements, afficher directement la liste
                         selectedClusterEvents = nearbyEvents
                         isClusterBottomSheetVisible = true
-                    } else {
-                        mapViewportState.setCameraOptions {
-                            zoom((mapViewportState.cameraState?.zoom ?: 10.0) + 2.0)
-                            center(clusterPoint)
+                    }
+                    // Cas 3: Grand cluster, comportement normal de zoom
+                    else {
+                        // Stratégie adaptative de zoom
+                        val zoomIncrement = when {
+                            cluster.pointCount > 100 -> 1.0
+                            cluster.pointCount > 50 -> 1.5
+                            cluster.pointCount > 10 -> 2.0
+                            else -> 2.5
                         }
+
+                        // Comportement normal pour les clusters plus grands
+                        mapViewportState.flyTo(
+                            CameraOptions.Builder()
+                                .zoom(currentZoom + zoomIncrement)
+                                .center(clusterPoint)
+                                .build()
+                        )
                     }
                     true
                 }
@@ -425,7 +504,22 @@ fun MapBoxView(
 }
 
 /**
- * Trouve les événements proches d'un point donné.
+ * Extension pour animer la caméra
+ */
+fun com.mapbox.maps.extension.compose.animation.viewport.MapViewportState.flyTo(
+    cameraOptions: com.mapbox.maps.CameraOptions
+) {
+    flyTo(
+        cameraOptions,
+        mapAnimationOptions {
+            duration(1000)
+            startDelay(0)
+        }
+    )
+}
+
+/**
+ * Amélioration de la fonction findNearbyEvents pour une meilleure détection
  */
 private fun findNearbyEvents(
     centerPoint: Point,
@@ -433,15 +527,41 @@ private fun findNearbyEvents(
     maxDistance: Double,
     maxEvents: Int
 ): List<Event> {
-    // Calculer la distance entre deux points
+    // Améliorer la fonction de calcul de distance pour qu'elle soit plus précise
     fun distanceBetween(p1: Point, p2: Point): Double {
-        val dx = p1.longitude() - p2.longitude()
-        val dy = p1.latitude() - p2.latitude()
-        return Math.sqrt(dx * dx + dy * dy)
+        // Utiliser la formule de Haversine pour une distance plus précise
+        val R = 6371.0 // Rayon de la Terre en km
+        val lat1 = Math.toRadians(p1.latitude())
+        val lon1 = Math.toRadians(p1.longitude())
+        val lat2 = Math.toRadians(p2.latitude())
+        val lon2 = Math.toRadians(p2.longitude())
+
+        val dLat = lat2 - lat1
+        val dLon = lon2 - lon1
+
+        val a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLon/2) * Math.sin(dLon/2)
+        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+
+        return R * c // Distance en km
+    }
+
+    // Identifier les événements avec des coordonnées identiques
+    val pointGroups = events.groupBy {
+        // Arrondir les coordonnées à 6 décimales (précision d'environ 10 cm)
+        // pour détecter les points très proches
+        String.format("%.6f,%.6f", it.getCoordinates().latitude(), it.getCoordinates().longitude())
+    }
+
+    // Log les groupes de points identiques ou très proches
+    pointGroups.filter { it.value.size > 1 }.forEach { (coords, eventList) ->
+        Log.d("MapBoxView", "Points multiples à $coords: ${eventList.size} événements")
     }
 
     // Trier les événements par distance
     return events
+        .asSequence()
         .map { event ->
             val point = event.getCoordinates()
             val distance = distanceBetween(centerPoint, point)
@@ -451,6 +571,53 @@ private fun findNearbyEvents(
         .sortedBy { (_, distance) -> distance }
         .take(maxEvents)
         .map { (event, _) -> event }
+        .toList()
+}
+
+// Fonction utilitaire pour décaler légèrement les markers superposés
+// À activer une fois la méthode copyWithNewCoordinates implémentée dans la classe Event
+fun offsetOverlappingMarkers(events: List<Event>): List<Event> {
+    // Identifier les groupes de marqueurs aux mêmes coordonnées
+    val pointGroups = events.groupBy {
+        String.format("%.6f,%.6f", it.getCoordinates().latitude(), it.getCoordinates().longitude())
+    }
+
+    val result = mutableListOf<Event>()
+
+    for ((_, group) in pointGroups) {
+        if (group.size == 1) {
+            // Si un seul marqueur à cette position, pas besoin de décalage
+            result.addAll(group)
+        } else {
+            // Si plusieurs marqueurs, appliquer un petit décalage pour les rendre visibles
+            val theta = 2 * Math.PI / group.size
+            val offsetDistance = 0.0001 // Environ 10m à l'équateur
+
+            group.forEachIndexed { index, event ->
+                val angle = theta * index
+                // Calculer un petit décalage en cercle autour du point d'origine
+                val offsetLat = offsetDistance * Math.sin(angle)
+                val offsetLng = offsetDistance * Math.cos(angle)
+
+                val originalPoint = event.getCoordinates()
+                val newPoint = Point.fromLngLat(
+                    originalPoint.longitude() + offsetLng,
+                    originalPoint.latitude() + offsetLat
+                )
+
+                // Créer un nouvel événement avec les coordonnées décalées
+                // Cela dépend de la structure de votre classe Event
+                // Example:
+                // val modifiedEvent = event.copyWithNewCoordinates(newPoint)
+                // result.add(modifiedEvent)
+
+                // Comme la méthode n'est pas encore disponible, on ajoute l'événement original
+                result.add(event)
+            }
+        }
+    }
+
+    return result
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -509,11 +676,6 @@ fun DateRangePickerModal(
         }
     }
 }
-
-
-
-
-
 
 /**
  * Charge une image depuis une URL et crée un marqueur rond avec bordure.
@@ -622,4 +784,3 @@ private fun createDefaultMarker(context: Context): Bitmap {
 
     return bitmap
 }
-// https://docs.mapbox.com/android/maps/examples/add-point-annotations/

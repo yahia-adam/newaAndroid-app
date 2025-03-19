@@ -58,6 +58,50 @@ class Event(
         return tags.toList()
     }
 
+    // Dans ta classe Event
+    fun copyWithNewCoordinates(newPoint: Point): Event {
+        // Nous devons créer un nouvel objet TicketmasterLocation avec les nouvelles coordonnées
+        val newLocation = embedded?.venues?.get(0)?.location?.let { oldLocation ->
+            TicketmasterLocation(
+                longitude = newPoint.longitude(),
+                latitude = newPoint.latitude()
+            )
+        }
+
+        // Nous devons créer un nouvel objet TicketMasterVenue avec la nouvelle location
+        val newVenue = embedded?.venues?.get(0)?.let { oldVenue ->
+            TicketMasterVenue(
+                name = oldVenue.name,
+                postalCode = oldVenue.postalCode,
+                city = oldVenue.city,
+                address = oldVenue.address,
+                location = newLocation ?: oldVenue.location
+            )
+        }
+
+        // Nous devons créer un nouvel objet TicketMasterEmbeddedVenue avec le nouveau venue
+        val newEmbedded = embedded?.let { oldEmbedded ->
+            TicketMasterEmbeddedVenue(
+                venues = oldEmbedded.venues.mapIndexed { index, venue ->
+                    if (index == 0 && newVenue != null) newVenue else venue
+                }
+            )
+        }
+
+        // Retourner un nouvel Event avec toutes les propriétés inchangées sauf l'embedded
+        return Event(
+            id = this.id,
+            name = this.name,
+            description = this.description,
+            url = this.url,
+            images = this.images,
+            dates = this.dates,
+            priceRanges = this.priceRanges,
+            classifications = this.classifications,
+            embedded = newEmbedded
+        )
+    }
+
     fun getCoordinates() : Point {
         return Point.fromLngLat(embedded?.venues?.get(0)?.location?.longitude ?: 0.0, embedded?.venues?.get(0)?.location?.latitude ?: 0.0)
     }
