@@ -13,9 +13,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
+import javax.inject.Singleton
 
 sealed class PrivyState {
     data object Initialized : PrivyState()
@@ -33,13 +35,24 @@ sealed class PrivyAuthState {
     data object Unauthenticated : PrivyAuthState()
 }
 
+// Résultats d'opérations Privy
+sealed class PrivyResult<out T> {
+    data class Success<T>(val data: T) : PrivyResult<T>()
+    data class Error(val error: AppError, val message: String) : PrivyResult<Nothing>()
+}
+
+@Singleton
 class PrivyManager @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val errorHandler: ErrorHandler
 ) {
 
     private val TAG = "PrivyManager"
     private var privy: Privy? = null
     private var privyUser: PrivyUser? = null
+
+    // Timeout pour les opérations Privy (en ms)
+    private val PRIVY_OPERATION_TIMEOUT = 15000L
 
     private val _state = MutableStateFlow<PrivyState>(PrivyState.Uninitialized)
     val state: StateFlow<PrivyState> = _state
@@ -62,6 +75,11 @@ class PrivyManager @Inject constructor(
             )
             _state.value = PrivyState.Initialized
             Log.i(TAG, "Privy successfully initialized")
+
+            // Lancer l'observation de l'état d'authentification après l'initialisation
+            CoroutineScope(Dispatchers.IO).launch {
+                observeAuthState()
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing Privy: ${e.message}")
             _state.value = PrivyState.Error.ConfigError(e)
@@ -72,53 +90,93 @@ class PrivyManager @Inject constructor(
         initializePrivy()
     }
 
-    suspend fun sendOTPCode(email: String) : Result<Unit>{
-        return try {
-            privy?.awaitReady()
-            val result = privy?.email?.sendCode(email = email)
-            result?.fold(
-                onSuccess = {
-                    Log.d(TAG, "Code OTP envoyé avec succès à $email")
-                    Result.success(Unit)
-                },
-                onFailure = { error ->
-                    Log.e(TAG, "Échec d'envoi du code OTP: ${error.message}")
-                    Result.failure(error)
+    suspend fun sendOTPCode(email: String): PrivyResult<Unit> = withContext(Dispatchers.IO) {
+        try {
+            // Vérifier que Privy est initialisé
+            if (privy == null) {
+                val message = context.getString(R.string.error_privy_not_initialized)
+                return@withContext PrivyResult.Error(
+                    AppError.UnknownError(Exception(message)),
+                    message
+                )
+            }
+
+            // Ajouter un timeout pour éviter que l'opération ne bloque indéfiniment
+            withTimeout(PRIVY_OPERATION_TIMEOUT) {
+                privy?.awaitReady()
+                val result = privy?.email?.sendCode(email = email)
+                result?.fold(
+                    onSuccess = {
+                        Log.d(TAG, "Code OTP envoyé avec succès à $email")
+                        PrivyResult.Success(Unit)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Échec d'envoi du code OTP: ${error.message}")
+                        val (appError, message) = errorHandler.handleException(error)
+                        PrivyResult.Error(appError, message)
+                    }
+                ) ?: run {
+                    val message = context.getString(R.string.error_privy_not_initialized)
+                    PrivyResult.Error(
+                        AppError.UnknownError(Exception(message)),
+                        message
+                    )
                 }
-            ) ?: Result.failure(Exception("Privy n'est pas initialisé correctement"))
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Exception lors de l'envoi du code OTP: ${e.message}")
-            Result.failure(e)
+            val (appError, message) = errorHandler.handleException(e)
+            PrivyResult.Error(appError, message)
         }
     }
 
-    suspend fun verifyOTPCode(email: String, otp: String) : Result<PrivyUser?> {
-        return try {
-            privy?.awaitReady()
-            val result = privy?.email?.loginWithCode(
-                email = email,
-                code = otp
-            )
-            result?.fold(
-                onSuccess = { user ->
-                    Log.d(TAG, "Vérification OTP réussie pour $email")
-                    privyUser = user
-                    Result.success(user)
-                },
-                onFailure = { error ->
-                    Log.e(TAG, "Échec de vérification OTP: ${error.message}")
-                    Result.failure(error)
+    suspend fun verifyOTPCode(email: String, otp: String): PrivyResult<PrivyUser?> = withContext(Dispatchers.IO) {
+        try {
+            // Vérifier que Privy est initialisé
+            if (privy == null) {
+                val message = context.getString(R.string.error_privy_not_initialized)
+                return@withContext PrivyResult.Error(
+                    AppError.UnknownError(Exception(message)),
+                    message
+                )
+            }
+
+            // Ajouter un timeout pour éviter que l'opération ne bloque indéfiniment
+            withTimeout(PRIVY_OPERATION_TIMEOUT) {
+                privy?.awaitReady()
+                val result = privy?.email?.loginWithCode(
+                    email = email,
+                    code = otp
+                )
+                result?.fold(
+                    onSuccess = { user ->
+                        Log.d(TAG, "Vérification OTP réussie pour $email")
+                        privyUser = user
+                        PrivyResult.Success(user)
+                    },
+                    onFailure = { error ->
+                        Log.e(TAG, "Échec de vérification OTP: ${error.message}")
+                        val (appError, message) = errorHandler.handleException(error)
+                        PrivyResult.Error(appError, message)
+                    }
+                ) ?: run {
+                    val message = context.getString(R.string.error_privy_not_initialized)
+                    PrivyResult.Error(
+                        AppError.UnknownError(Exception(message)),
+                        message
+                    )
                 }
-            ) ?: Result.failure(Exception("Privy n'est pas initialisé correctement"))
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Exception lors de la vérification du code OTP: ${e.message}")
-            Result.failure(e)
+            val (appError, message) = errorHandler.handleException(e)
+            PrivyResult.Error(appError, message)
         }
     }
 
     // Collecte les mises à jour de l'état d'authentification
-     suspend fun observeAuthState() {
-        CoroutineScope(Dispatchers.IO).launch {
+    suspend fun observeAuthState() {
+        try {
             privy?.authState?.collect { authState ->
                 when (authState) {
                     is AuthState.Authenticated -> {
@@ -135,6 +193,17 @@ class PrivyManager @Inject constructor(
                     }
                 }
             }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error observing auth state: ${e.message}")
+            // Si l'observation échoue, considérer l'utilisateur comme non authentifié
+            _authState.value = PrivyAuthState.Unauthenticated
         }
+    }
+
+    // Vérification de la connectivité réseau
+    fun isNetworkAvailable(): Boolean {
+        // Tu peux utiliser ConnectivityManager pour vérifier la connectivité réseau
+        // Implémentation simplifiée ici
+        return true
     }
 }

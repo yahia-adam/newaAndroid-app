@@ -3,12 +3,10 @@ package com.bythewayapp.ui.componets
 import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Canvas
-import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Shader
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
@@ -29,29 +27,18 @@ import android.content.Context
 import android.graphics.*
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import com.google.gson.JsonObject
-import com.mapbox.geojson.Point
-import com.mapbox.maps.extension.compose.MapboxMap
-import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotationGroup
 import com.mapbox.maps.extension.style.expressions.generated.Expression
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -61,36 +48,138 @@ import androidx.compose.ui.zIndex
 import androidx.compose.material3.rememberDateRangePickerState
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDateRangePickerState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-import com.mapbox.maps.plugin.PuckBearing
 import com.mapbox.maps.plugin.locationcomponent.createDefault2DPuck
-import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.util.Date
-import java.util.Locale
 import androidx.core.graphics.createBitmap
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import com.bythewayapp.R
+import com.mapbox.geojson.Point
+import com.mapbox.maps.extension.compose.MapEffect
+import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
+import com.mapbox.maps.plugin.locationcomponent.location
+
+/**
+ * A composable that displays zoom controls and a location button for MapBox.
+ *
+ * @param mapViewportState The state of the map's viewport
+ * @param onLocationClick Callback when the location button is clicked
+ * @param modifier Modifier for this composable
+ */
+@Composable
+fun MapControls(
+    currentZoom: Double,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit,
+    onLocationClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .padding(top = 0.dp, bottom = 0.dp, end = 0.dp, start = 0.dp)
+            .shadow(elevation = 4.dp, shape = RoundedCornerShape(8.dp))
+            .background(Color.White, RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Zoom in button
+        MapControlButton(
+            onClick = onZoomIn,
+            icon = painterResource(id=R.drawable.baseline_add_24)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Zoom out button
+        MapControlButton(
+            onClick = onZoomOut,
+            icon = painterResource(id=R.drawable.baseline_remove_24)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Location button
+        MapControlButton(
+            onClick = onLocationClick,
+            icon = painterResource(id=R.drawable.baseline_my_location_24),
+            tint = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+private fun MapControlButton(
+    onClick: () -> Unit,
+    icon: Painter,
+    tint: Color = Color.Black
+) {
+    Box(
+        modifier = Modifier
+            .size(35.dp)
+            .clip(CircleShape)
+            .background(Color.White)
+            .border(1.dp, Color.LightGray.copy(alpha = 0.5f), CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+/**
+ * Extension to be used in your existing MapBoxView composable
+ */
+fun handleZoomIn(mapViewportState: com.mapbox.maps.extension.compose.animation.viewport.MapViewportState) {
+    val currentZoom = mapViewportState.cameraState?.zoom ?: 10.0
+    mapViewportState.setCameraOptions {
+        zoom(currentZoom + 1.0)
+    }
+}
+
+fun handleZoomOut(mapViewportState: com.mapbox.maps.extension.compose.animation.viewport.MapViewportState) {
+    val currentZoom = mapViewportState.cameraState?.zoom ?: 10.0
+    mapViewportState.setCameraOptions {
+        zoom(currentZoom - 1.0)
+    }
+}
+
+fun handleLocationClick(
+    mapViewportState: com.mapbox.maps.extension.compose.animation.viewport.MapViewportState,
+    currentUserLocation: Point?
+) {
+    currentUserLocation?.let { userLocation ->
+        mapViewportState.setCameraOptions {
+            center(userLocation)
+            zoom(15.0) // Adjust zoom level as needed
+        }
+    }
+}
 
 @Composable
 fun MapBoxView(
@@ -113,6 +202,9 @@ fun MapBoxView(
     var isEventDetailBottomSheetVisible by remember { mutableStateOf(false) }
     var selectedEvent by remember { mutableStateOf<Event?>(null) }
 
+    // État pour suivre la position de l'utilisateur
+    var currentUserLocation by remember { mutableStateOf<Point?>(null) }
+
     val validEvents = events.filter {
         val point = it.getCoordinates()
         point.longitude() != 0.0 || point.latitude() != 0.0
@@ -127,7 +219,7 @@ fun MapBoxView(
 
     val mapViewportState = rememberMapViewportState {
         setCameraOptions {
-            zoom(10.0)
+            zoom(11.0)
             center(Point.fromLngLat(2.3522, 48.8566)) // Coordonnées de Paris
         }
     }
@@ -165,6 +257,18 @@ fun MapBoxView(
             modifier = modifier.fillMaxSize(),
             mapViewportState = mapViewportState
         ) {
+            MapEffect(key1 = Unit) { mapView ->
+                val onIndicatorPositionChangedListener = OnIndicatorPositionChangedListener {
+                    currentUserLocation = it
+                }
+
+                mapView.location.apply {
+                    enabled = true
+                    addOnIndicatorPositionChangedListener(onIndicatorPositionChangedListener)
+                    locationPuck = createDefault2DPuck(withBearing = true)
+                }
+            }
+
             PointAnnotationGroup(
                 annotations = eventPoints.mapIndexed { index, item ->
                     val event = validEvents[index]
@@ -174,9 +278,7 @@ fun MapBoxView(
                         .withPoint(item)
                         .withData(
                             JsonObject().apply {
-                                addProperty("id", event.id)
-                                addProperty("url", event.url)
-                                addProperty("image", event.images?.get(0)?.url)
+                                addProperty("index", index)
                             }
                         )
                         // N'appliquer l'image que si elle est disponible
@@ -239,18 +341,26 @@ fun MapBoxView(
                         selectedClusterEvents = nearbyEvents
                         isClusterBottomSheetVisible = true
                     } else {
-                        // Si nous ne trouvons pas d'événements, essayons de zoomer sur le cluster
-                        /*
-                        mapViewportState.flyTo {
+                        mapViewportState.setCameraOptions {
+                            zoom((mapViewportState.cameraState?.zoom ?: 10.0) + 2.0)
                             center(clusterPoint)
-                            zoom(mapViewportState.cameraState.zoom + 2)
-                        }*/
+                        }
                     }
-
                     true
                 }
             }
         }
+
+        // Ajouter les contrôles de carte (zoom et localisation)
+        MapControls(
+            currentZoom = mapViewportState.cameraState?.zoom ?: 11.0,
+            onZoomIn = { handleZoomIn(mapViewportState) },
+            onZoomOut = { handleZoomOut(mapViewportState) },
+            onLocationClick = { handleLocationClick(mapViewportState, currentUserLocation) },
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 30.dp, end = 16.dp)
+        )
 
         Column (
             modifier = Modifier

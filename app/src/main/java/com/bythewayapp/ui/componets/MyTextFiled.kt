@@ -1,11 +1,13 @@
 package com.bythewayapp.ui.componets
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun MySearchTextField(
@@ -194,44 +198,111 @@ fun EnhancedDateButton(
     }
 }
 
+/**
+ * Champ de texte pour saisir une adresse email avec gestion des erreurs
+ */
 @Composable
 fun MyEmailTextField(
     modifier: Modifier = Modifier,
     email: String,
-    onEmailChanged: (String) -> Unit
+    onEmailChanged: (String) -> Unit,
+    isError: Boolean = false,
+    errorMessage: String = ""
 ) {
-    OutlinedTextField(
-        value = email,
-        onValueChange = { onEmailChanged(it) },
-        label = {
-            Text(text = "Entrer votre address email")
-        },
-        leadingIcon = {
-            Icon(
-                Icons.Default.Email,
-                contentDescription = "email icons"
+    Column(modifier = modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = email,
+            onValueChange = { onEmailChanged(it) },
+            label = {
+                Text(text = "Entrez votre adresse email")
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Email,
+                    contentDescription = "Icône email",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            isError = isError,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                errorContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+            )
+        )
+
+        // Afficher le message d'erreur si nécessaire
+        AnimatedVisibility(visible = isError && errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
             )
         }
-    )
+    }
 }
 
+/**
+ * Champ de texte pour saisir un code de vérification avec gestion des erreurs
+ */
 @Composable
 fun MyOptCodeTextField(
     modifier: Modifier = Modifier,
     code: String,
-    onCodeChanged: (String) -> Unit
+    onCodeChanged: (String) -> Unit,
+    isError: Boolean = false,
+    errorMessage: String = ""
 ) {
-    OutlinedTextField(
-        value = code,
-        onValueChange = { onCodeChanged(it) },
-        label = {
-            Text(text = "Entrez le code reçu par email")
-        },
-        leadingIcon = {
-            Icon(
-                Icons.Default.Lock,
-                contentDescription = "code icons"
+    Column(modifier = modifier.fillMaxWidth()) {
+        OutlinedTextField(
+            value = code,
+            onValueChange = {
+                // Limiter la saisie aux caractères numériques et à une longueur maximale
+                if (it.all { char -> char.isDigit() } && it.length <= 6) {
+                    onCodeChanged(it)
+                }
+            },
+            label = {
+                Text(text = "Entrez le code reçu par email")
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Lock,
+                    contentDescription = "Icône code",
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            },
+            isError = isError,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            ),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                errorContainerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f)
+            )
+        )
+
+        // Afficher le message d'erreur si nécessaire
+        AnimatedVisibility(visible = isError && errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
             )
         }
-    )
+    }
 }

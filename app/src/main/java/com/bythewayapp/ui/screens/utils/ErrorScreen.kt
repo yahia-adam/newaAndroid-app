@@ -34,6 +34,242 @@ import androidx.compose.ui.unit.dp
 import com.bythewayapp.R
 import com.bythewayapp.core.SettingsHelper
 import com.bythewayapp.ui.viewModels.LocationErrorType
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import com.bythewayapp.ui.viewModels.PrivyLoginUiState
+
+/**
+ * Écran d'erreur réseau pour l'authentification
+ */
+@Composable
+fun NetworkErrorScreen(
+    errorMessage: String,
+    retryAction: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(id=R.drawable.baseline_wifi_off_24),
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = stringResource(R.string.error_network_title),
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = errorMessage,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        NetworkTroubleshootingCard()
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = retryAction,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(ButtonDefaults.IconSize)
+            )
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+            Text(stringResource(R.string.retry))
+        }
+    }
+}
+
+
+/**
+ * Carte de dépannage réseau
+ */
+@Composable
+private fun NetworkTroubleshootingCard() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = stringResource(R.string.network_troubleshooting_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = stringResource(R.string.network_troubleshooting_step1),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = stringResource(R.string.network_troubleshooting_step2),
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = stringResource(R.string.network_troubleshooting_step3),
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+/**
+ * Écran d'erreur d'authentification pour l'authentification
+ */
+@Composable
+fun AuthErrorScreen(
+    errorMessage: String,
+    retryAction: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            painter = painterResource(id= R.drawable.baseline_error_outline_24),
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = stringResource(R.string.error_authentication_title),
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = errorMessage,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = retryAction,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(ButtonDefaults.IconSize)
+            )
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+            Text(stringResource(R.string.retry))
+        }
+    }
+}
+
+/**
+ * Écran d'erreur de validation pour l'authentification
+ */
+@Composable
+fun ValidationErrorScreen(
+    field: String,
+    errorMessage: String,
+    retryAction: () -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Warning,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.error
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = stringResource(R.string.error_validation_title),
+            style = MaterialTheme.typography.headlineMedium,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = errorMessage,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = retryAction,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(stringResource(R.string.retry))
+        }
+    }
+}
 
 @Composable
 fun EnableUserLocationScreen(

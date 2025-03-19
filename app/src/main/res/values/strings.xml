@@ -16,4 +16,41 @@
     <string name="enable_location_instructions">Comment activer la géolocalisation :</string>
     <string name="retry">Réessayer</string>
     <string name="open_settings">Ouvrir les paramètres</string>
+
+
+    <!-- Erreurs générales -->
+    <string name="error_unknown">Une erreur inattendue s\'est produite</string>
+    <string name="error_network_connection">Problème de connexion réseau</string>
+    <string name="error_server">Problème avec le serveur, veuillez réessayer plus tard</string>
+    <string name="error_resource_not_found">La ressource demandée n\'a pas été trouvée</string>
+
+    <!-- Erreurs d'authentification -->
+    <string name="error_authentication">Problème d\'authentification</string>
+    <string name="error_invalid_code">Code de vérification incorrect</string>
+    <string name="error_code_expired">Ce code a expiré, veuillez en demander un nouveau</string>
+    <string name="error_privy_unknown">Problème avec le service d\'authentification</string>
+    <string name="error_privy_not_initialized">Le service d\'authentification n\'est pas initialisé</string>
+
+    <!-- Écrans d'erreur -->
+    <string name="error_network_title">Problème de connexion</string>
+    <string name="error_authentication_title">Authentification échouée</string>
+    <string name="error_validation_title">Entrée invalide</string>
+    <string name="network_troubleshooting_title">Essayez ces solutions :</string>
+    <string name="network_troubleshooting_step1">1. Vérifiez votre connexion Wi-Fi ou données mobiles</string>
+    <string name="network_troubleshooting_step2">2. Assurez-vous que le mode avion est désactivé</string>
+    <string name="network_troubleshooting_step3">3. Si le problème persiste, essayez plus tard</string>
+
+    <!-- Validation -->
+    <string name="invalid_email_format">Format d\'email invalide</string>
+    <string name="invalid_code">Code de vérification invalide</string>
+
+    <!-- Interface de connexion -->
+    <string name="login_with_email">Connexion par email</string>
+    <string name="verify_code">Vérification du code</string>
+    <string name="code_sent_to">Un code a été envoyé à %s</string>
+    <string name="next">Suivant</string>
+    <string name="verify">Vérifier</string>
+    <string name="resend_code">Renvoyer le code</string>
+    <string name="go_back">Retour</string>
+
 </resources>

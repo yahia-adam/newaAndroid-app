@@ -5,6 +5,7 @@ import android.content.Context
 import com.bythewayapp.ByTheWayApplication
 import com.bythewayapp.core.AndroidPermissionManager
 import com.bythewayapp.core.ConnectionStateManager
+import com.bythewayapp.core.ErrorHandler
 import com.bythewayapp.core.EventsFileLoader
 import com.bythewayapp.core.LocationManager
 import com.bythewayapp.core.PermissionManager
@@ -33,8 +34,9 @@ object AppModule {
     @Singleton
     fun providePrivyManager(
         @ApplicationContext context: Context,
+        errorHandler: ErrorHandler
     ): PrivyManager {
-        return PrivyManager(context)
+        return PrivyManager(context, errorHandler)
     }
 
     @Provides
@@ -68,6 +70,14 @@ object AppModule {
         permissionManager: PermissionManager
     ): LocationManager {  // Change return type to PermissionManager
         return LocationManager(context, permissionManager)
+    }
+
+    @Provides
+    @Singleton
+    fun ProvidePrivyErrorHandler(
+        @ApplicationContext context: Context,
+    ): ErrorHandler {  // Change return type to PermissionManager
+        return ErrorHandler(context)
     }
 
 }
