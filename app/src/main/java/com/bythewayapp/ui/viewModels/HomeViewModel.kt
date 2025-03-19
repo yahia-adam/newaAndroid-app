@@ -103,7 +103,8 @@ class HomeViewModel @Inject constructor(
                     getEvents(
                         size = DEFAULT_SIZE,
                         startDateTime = startDate ?: "",
-                        endDateTime = endDate ?: ""
+                        endDateTime = endDate ?: "",
+                        city = DEFAULT_CITY
                     )
                 }
                 result.isFailure -> {
@@ -197,7 +198,9 @@ class HomeViewModel @Inject constructor(
                 keyword = keyword,
                 size = DEFAULT_SIZE,
                 startDateTime = startDate ?: "",
-                endDateTime = endDate ?: ""
+                endDateTime = endDate ?: "",
+                city = DEFAULT_CITY
+
             )
         }
     }

@@ -32,7 +32,8 @@ fun ResultScreen(
         onKeywordChanged = onKeywordChanged,
         btnSelectedDate = btnSelectedDate,
         onDateRangeChanged = onDateRangeChanged,
-        events = events
+        events = events,
+        onEventClick = {}
     )
 }
 

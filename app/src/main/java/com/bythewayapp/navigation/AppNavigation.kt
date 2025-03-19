@@ -14,12 +14,9 @@ enum class Screen {
 }
 
 sealed class NavigationItem(val route: String) {
-
     data object Home: NavigationItem(Screen.HOME.name)
-
     data object PrivyLogin: NavigationItem(Screen.PRIVY_LOGIN.name)
 }
-
 
 @Composable
 fun AppNavHost(
@@ -42,5 +39,6 @@ fun AppNavHost(
                 }
             )
         }
+
     }
 }

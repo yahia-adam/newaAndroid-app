@@ -21,7 +21,7 @@ fun BythewayApp() {
     AppNavHost(
         //modifier = Modifier.padding(innerPadding),
         navController = navController,
-        startDestination = NavigationItem.Home.route
+        startDestination = NavigationItem.PrivyLogin.route
     )
         //}
     // }

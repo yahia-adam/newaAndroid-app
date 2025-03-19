@@ -136,4 +136,7 @@ dependencies {
     implementation ("ch.hsr:geohash:1.4.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
+    implementation("com.google.accompanist:accompanist-placeholder-material:0.31.1-alpha")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+
 }

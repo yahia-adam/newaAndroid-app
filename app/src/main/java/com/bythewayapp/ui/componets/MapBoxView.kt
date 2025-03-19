@@ -63,8 +63,10 @@ import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -87,6 +89,8 @@ import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.util.Date
 import java.util.Locale
+import androidx.core.graphics.createBitmap
+
 
 @Composable
 fun MapBoxView(
@@ -94,11 +98,20 @@ fun MapBoxView(
     onKeywordChanged: (String) -> Unit,
     btnSelectedDate: String,
     onDateRangeChanged: (Long, Long) -> Unit,
+    onEventClick: (Event) -> Unit,
     modifier: Modifier = Modifier,
     events: List<Event>
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+
+    // État pour le BottomSheet des clusters
+    var isClusterBottomSheetVisible by remember { mutableStateOf(false) }
+    var selectedClusterEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
+
+    // État pour le BottomSheet de détail d'un événement individuel
+    var isEventDetailBottomSheetVisible by remember { mutableStateOf(false) }
+    var selectedEvent by remember { mutableStateOf<Event?>(null) }
 
     val validEvents = events.filter {
         val point = it.getCoordinates()
@@ -109,15 +122,13 @@ fun MapBoxView(
     // État pour stocker les bitmaps des marqueurs
     val markerBitmaps = remember { mutableStateMapOf<String, Bitmap?>() }
 
-    // Decoupled snackbar host state from scaffold state for demo purposes.
     val snackState = remember { SnackbarHostState() }
-    val snackScope = rememberCoroutineScope()
     var showDateRangePicker by remember { mutableStateOf(false) }
 
     val mapViewportState = rememberMapViewportState {
         setCameraOptions {
-            zoom(5.0)
-            center(Point.fromLngLat(2.213749, 46.227638))
+            zoom(10.0)
+            center(Point.fromLngLat(2.3522, 48.8566)) // Coordonnées de Paris
         }
     }
 
@@ -149,23 +160,11 @@ fun MapBoxView(
         }
     }
 
-    Box {
+    Box(modifier = Modifier.fillMaxSize()) {
         MapboxMap(
             modifier = modifier.fillMaxSize(),
             mapViewportState = mapViewportState
         ) {
-
-            /*
-            MapEffect(Unit) { mapView ->
-                mapView.location.updateSettings {
-                    locationPuck = createDefault2DPuck(withBearing = true)
-                    enabled = true
-                    puckBearing = PuckBearing.COURSE
-                    puckBearingEnabled = true
-                }
-                mapViewportState.transitionToFollowPuckState()
-            }*/
-
             PointAnnotationGroup(
                 annotations = eventPoints.mapIndexed { index, item ->
                     val event = validEvents[index]
@@ -201,9 +200,56 @@ fun MapBoxView(
                     )
                 )
             ) {
-                // Gestionnaire de clic
-            }
+                // Gestionnaire de clic sur un marqueur individuel
+                interactionsState.onClicked { clickedPoint ->
+                    // Trouver l'événement correspondant au point cliqué
+                    val index = eventPoints.indexOfFirst {
+                        it.longitude() == clickedPoint.point.longitude() &&
+                                it.latitude() == clickedPoint.point.latitude()
+                    }
 
+                    if (index != -1) {
+                        val event = validEvents[index]
+                        // Au lieu de faire onEventClick, on affiche le BottomSheet de détail
+                        selectedEvent = event
+                        isEventDetailBottomSheetVisible = true
+                    }
+
+                    true
+                }
+
+                // Gestionnaire de clic sur un cluster
+                interactionsState.onClusterClicked { cluster ->
+                    Log.d("MapBoxView", "Cluster clicked: ID=${cluster.clusterId}, Count=${cluster.pointCount}")
+
+                    // Pour des raisons de simplicité, nous allons considérer que tous les événements
+                    // dans un rayon autour du centre du cluster font partie du cluster
+                    val clusterPoint = cluster.originalFeature.geometry() as Point
+
+                    // Trouver tous les événements proches du centre du cluster
+                    // Vous devrez peut-être ajuster la distance en fonction de vos besoins
+                    val nearbyEvents = findNearbyEvents(
+                        clusterPoint,
+                        validEvents,
+                        maxDistance = 0.1, // Ajuster selon vos besoins
+                        maxEvents = cluster.pointCount.toInt()
+                    )
+
+                    if (nearbyEvents.isNotEmpty()) {
+                        selectedClusterEvents = nearbyEvents
+                        isClusterBottomSheetVisible = true
+                    } else {
+                        // Si nous ne trouvons pas d'événements, essayons de zoomer sur le cluster
+                        /*
+                        mapViewportState.flyTo {
+                            center(clusterPoint)
+                            zoom(mapViewportState.cameraState.zoom + 2)
+                        }*/
+                    }
+
+                    true
+                }
+            }
         }
 
         Column (
@@ -213,20 +259,49 @@ fun MapBoxView(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            MySearchTextField(
-                modifier = modifier,
+
+            EnhancedSearchTextField(
+                modifier = Modifier,
                 value = keyword,
                 onValueChange = onKeywordChanged
             )
-            Button(
-                onClick = { showDateRangePicker = true },
-                modifier = Modifier.padding(top = 16.dp)
-            ) {
-                Text(text = btnSelectedDate)
-            }
-            SnackbarHost(hostState = snackState, Modifier.zIndex(1f))
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            EnhancedDateButton(
+                dateText = btnSelectedDate,
+                onClick = { showDateRangePicker = true }
+            )
+
+            SnackbarHost(hostState = snackState, Modifier.zIndex(1f))
         }
+
+        // Afficher le BottomSheet des événements du cluster
+        EventsBottomSheet(
+            isVisible = isClusterBottomSheetVisible,
+            events = selectedClusterEvents,
+            onClose = { isClusterBottomSheetVisible = false },
+            onEventClick = { event ->
+                // Au lieu d'appeler onEventClick directement, on affiche le BottomSheet de détail
+                selectedEvent = event
+                isClusterBottomSheetVisible = false
+                isEventDetailBottomSheetVisible = true
+            },
+            modifier = Modifier.zIndex(2f)
+        )
+
+        // Afficher le BottomSheet de détail d'un événement individuel
+        EventDetailBottomSheet(
+            isVisible = isEventDetailBottomSheetVisible,
+            event = selectedEvent,
+            onClose = { isEventDetailBottomSheetVisible = false },
+            onNavigate = { event ->
+                // Rediriger l'utilisateur vers l'URL de réservation de l'événement
+                onEventClick(event)
+                isEventDetailBottomSheetVisible = false
+            },
+            modifier = Modifier.zIndex(3f) // Priorité plus élevée que le BottomSheet de cluster
+        )
 
         if (showDateRangePicker) {
             DateRangePickerModal(
@@ -237,6 +312,35 @@ fun MapBoxView(
             )
         }
     }
+}
+
+/**
+ * Trouve les événements proches d'un point donné.
+ */
+private fun findNearbyEvents(
+    centerPoint: Point,
+    events: List<Event>,
+    maxDistance: Double,
+    maxEvents: Int
+): List<Event> {
+    // Calculer la distance entre deux points
+    fun distanceBetween(p1: Point, p2: Point): Double {
+        val dx = p1.longitude() - p2.longitude()
+        val dy = p1.latitude() - p2.latitude()
+        return Math.sqrt(dx * dx + dy * dy)
+    }
+
+    // Trier les événements par distance
+    return events
+        .map { event ->
+            val point = event.getCoordinates()
+            val distance = distanceBetween(centerPoint, point)
+            Pair(event, distance)
+        }
+        .filter { (_, distance) -> distance <= maxDistance }
+        .sortedBy { (_, distance) -> distance }
+        .take(maxEvents)
+        .map { (event, _) -> event }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -339,7 +443,7 @@ private suspend fun loadImageFromUrl(context: Context, url: String, size: Int): 
 
                 override fun onLoadFailed(errorDrawable: android.graphics.drawable.Drawable?) {
                     // Créer une image de remplacement en cas d'échec
-                    val fallbackBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+                    val fallbackBitmap = createBitmap(size, size)
                     fallbackBitmap.eraseColor(Color.Gray.toArgb())
                     continuation.resume(fallbackBitmap)
                 }
@@ -355,7 +459,7 @@ private fun createRoundMarkerWithBorder(
     borderWidth: Float,
     borderColor: Int
 ): Bitmap {
-    val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val output = createBitmap(size, size)
     val canvas = Canvas(output)
 
     // Calculer le rayon et le centre
@@ -386,7 +490,7 @@ private fun createRoundMarkerWithBorder(
  */
 private fun createDefaultMarker(context: Context): Bitmap {
     val size = 100
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val bitmap = createBitmap(size, size)
     val canvas = Canvas(bitmap)
 
     val paint = Paint().apply {
