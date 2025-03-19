@@ -11,7 +11,7 @@ class EventsFileLoader(private val context: Context) {
     // Charger depuis les assets
     fun loadEventsFromAssets(): String {
         try {
-            //val inputStream = context.assets.open("events.json")
+            //val inputStream = context.assets.open("events-test.json")
             //val json = inputStream.bufferedReader().use { it.readText() }
             return  "json"
         } catch (e: Exception) {
