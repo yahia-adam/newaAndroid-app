@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -512,7 +513,6 @@ fun InternetConnectionErrorScreen(
         }
     }
 }
-
 @Composable
 fun UnknownErrorScreen(
     modifier: Modifier = Modifier,
@@ -520,23 +520,49 @@ fun UnknownErrorScreen(
     retryAction: () -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(0.dp)
 ) {
-    Column (
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(contentPadding),
+            .padding(contentPadding)
+            .padding(horizontal = 24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             painter = painterResource(id = R.drawable.baseline_error_outline_24),
-            contentDescription = stringResource(R.string.error_connection_icon)
+            contentDescription = stringResource(R.string.error_connection_icon),
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.error
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = errorMessage,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
             modifier = Modifier.padding(16.dp)
         )
-        Button(onClick = retryAction ) {
-            Text(text = stringResource(R.string.r_essayer))
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(
+            onClick = retryAction,
+            modifier = Modifier.padding(vertical = 8.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.r_essayer),
+                style = MaterialTheme.typography.labelLarge
+            )
         }
     }
 }

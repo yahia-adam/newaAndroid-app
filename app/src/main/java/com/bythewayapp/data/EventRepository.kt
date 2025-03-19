@@ -18,7 +18,8 @@ class EventRepository @Inject constructor (
         startDateTime: String?,
         endDateTime: String?,
         size: String?,
-        city: String?
+        city: String?,
+        geoPoint: String?
     ): TicketmasterResponse {
         return TicketmasterApi.getEvents(
             keyword = keyword,
@@ -28,7 +29,8 @@ class EventRepository @Inject constructor (
             size = size,
             classificationName = classificationName,
             classificationId = classificationId,
-            city = city
+            city = city,
+            geoPoint = geoPoint
         )
     }
 

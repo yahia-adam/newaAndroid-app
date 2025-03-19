@@ -81,8 +81,6 @@ fun EventsBottomSheet(
         label = "bottomSheetHeight"
     )
 
-
-
     Box(
         modifier = modifier
             .fillMaxSize()

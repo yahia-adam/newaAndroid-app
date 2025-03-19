@@ -22,7 +22,11 @@ interface TicketmasterApiService {
         @Query("keyword") keyword: String?,
         @Query("classificationName") classificationName: List<String>?,
         @Query("classificationId") classificationId: List<String>?,
-        @Query("size") size: String?
+        @Query("includeSpellcheck") includeSpellcheck: String?,
+        @Query("size") size: String?,
+        @Query("geoPoint") geoPoint: String?,
+        @Query("radius") radius: String?,
+        @Query("unit") unit: String?
     ): TicketmasterResponse
 
     @GET("/discovery/v2/suggest")
@@ -32,7 +36,7 @@ interface TicketmasterApiService {
         @Query("resource") resource: List<String>?,
         @Query("includeTest") includeTest: String?,
         @Query("countryCode") countryCode: String?,
-        @Query("locale") locale: String?
+        @Query("locale") locale: String?,
     ): TicketmasterSuggestionResponse
 }
 
@@ -41,6 +45,9 @@ object TicketmasterApi {
     private const val LOCALE: String = "fr"
     private const val COUNTRY_CODE: String = "fr"
     private const val INCLUDE_TEST: String = "no"
+    private const val INCLUDE_SPELL_CHECK: String = "yes"
+    private const val DEFAULT_RADIUS: String = "100"
+    private const val DEFAULT_UNIT: String = "miles"
     private val RESOURCES: List<String> = listOf("events")
 
     private val retrofit = Retrofit.Builder()
@@ -59,6 +66,7 @@ object TicketmasterApi {
         classificationName: List<String>?,
         classificationId: List<String>?,
         city: String?,
+        geoPoint: String? = null
     ) = apiService.searchEvents(
         apiKey = API_KEY,
         id = id,
@@ -71,7 +79,11 @@ object TicketmasterApi {
         locale = LOCALE,
         countryCode = COUNTRY_CODE,
         includeTest = INCLUDE_TEST,
-        city = city
+        city = city,
+        includeSpellcheck = INCLUDE_SPELL_CHECK,
+        geoPoint = geoPoint,
+        radius = DEFAULT_RADIUS,
+        unit = DEFAULT_UNIT
     )
 
     suspend fun getSuggestion(

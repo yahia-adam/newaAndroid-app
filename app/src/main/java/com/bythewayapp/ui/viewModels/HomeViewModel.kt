@@ -27,6 +27,8 @@ import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import ch.hsr.geohash.GeoHash
 import android.location.Location
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 
 sealed interface BythewayUiSate {
     data class Success(val events: List<Event>): BythewayUiSate
@@ -145,7 +147,7 @@ class HomeViewModel @Inject constructor(
 
     fun getGeohash(latitude: Double, longitude: Double, precision: Int = 12): String {
         val geoHash = GeoHash.withBitPrecision(latitude, longitude, precision * 5)
-        return geoHash.toBase32()
+        return geoHash.toBase32().substring(0, 7)
     }
 
     fun reInitialise() {
@@ -191,17 +193,26 @@ class HomeViewModel @Inject constructor(
         )
     }
 
+    private var searchJob: Job? = null
+
     fun onKeywordChanged(value: String) {
         keyword = value
-        if (keyword.length > 3) {
-            getEvents(
-                keyword = keyword,
-                size = DEFAULT_SIZE,
-                startDateTime = startDate ?: "",
-                endDateTime = endDate ?: "",
-                city = DEFAULT_CITY
 
-            )
+        // Annule la recherche précédente si elle est toujours en cours
+        searchJob?.cancel()
+
+        if (keyword.length > 2) {
+            // Démarre une nouvelle recherche avec un délai
+            searchJob = viewModelScope.launch {
+                delay(500) // Attend 500ms avant de lancer la recherche
+                getEvents(
+                    keyword = keyword,
+                    size = DEFAULT_SIZE,
+                    startDateTime = startDate ?: "",
+                    endDateTime = endDate ?: "",
+                    city = DEFAULT_CITY
+                )
+            }
         }
     }
 
@@ -234,25 +245,12 @@ class HomeViewModel @Inject constructor(
                     classificationName = classificationName,
                     classificationId = classificationId,
                     city = city,
-                    //geoPoint = geoHash // Ajouter le geoPoint pour filtrer par proximité
+                    geoPoint = geoHash,
                 )
+
                 val events = response.embedded?.events ?: emptyList()
                 if (events.isNotEmpty()) {
                     bythewayUiSate = BythewayUiSate.Success(events)
-                } else {
-                    // Aucun événement trouvé à proximité, essayer sans filtrage géographique
-                    val fallbackResponse = eventRepository.getEvents(
-                        keyword = keyword,
-                        id = id,
-                        startDateTime = startDateTime,
-                        endDateTime = endDateTime,
-                        size = size,
-                        classificationName = classificationName,
-                        classificationId = classificationId,
-                        city = DEFAULT_CITY // Utiliser une ville par défaut
-                    )
-                    val fallbackEvents = fallbackResponse.embedded?.events ?: emptyList()
-                    bythewayUiSate = BythewayUiSate.Success(fallbackEvents)
                 }
             } catch (e: IOException) {
                 bythewayUiSate = BythewayUiSate.InternetConnectionError(context.getString(R.string.erreur_de_connexion))

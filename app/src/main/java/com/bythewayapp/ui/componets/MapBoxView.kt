@@ -82,7 +82,6 @@ import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListen
 import com.mapbox.maps.plugin.locationcomponent.location
 import kotlin.math.atan2
 import kotlin.math.cos
-import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -253,7 +252,7 @@ fun MapBoxView(
 
     val mapViewportState = rememberMapViewportState {
         setCameraOptions {
-            zoom(11.0)
+            zoom(12.0)
             center(Point.fromLngLat(2.3522, 48.8566)) // Coordonnées de Paris
         }
     }
