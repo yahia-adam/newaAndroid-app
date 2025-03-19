@@ -80,7 +80,11 @@ import com.mapbox.maps.extension.compose.MapEffect
 import com.mapbox.maps.plugin.animation.MapAnimationOptions.Companion.mapAnimationOptions
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
 import com.mapbox.maps.plugin.locationcomponent.location
+import kotlin.math.atan2
+import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * A composable that displays zoom controls and a location button for MapBox.
@@ -521,6 +525,7 @@ fun com.mapbox.maps.extension.compose.animation.viewport.MapViewportState.flyTo(
 /**
  * Amélioration de la fonction findNearbyEvents pour une meilleure détection
  */
+@SuppressLint("DefaultLocale")
 private fun findNearbyEvents(
     centerPoint: Point,
     events: List<Event>,
@@ -539,10 +544,10 @@ private fun findNearbyEvents(
         val dLat = lat2 - lat1
         val dLon = lon2 - lon1
 
-        val a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1) * Math.cos(lat2) *
-                Math.sin(dLon/2) * Math.sin(dLon/2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+        val a = sin(dLat/2) * sin(dLat/2) +
+                cos(lat1) * cos(lat2) *
+                sin(dLon/2) * sin(dLon/2)
+        val c = 2 * atan2(sqrt(a), sqrt(1-a))
 
         return R * c // Distance en km
     }
@@ -576,6 +581,7 @@ private fun findNearbyEvents(
 
 // Fonction utilitaire pour décaler légèrement les markers superposés
 // À activer une fois la méthode copyWithNewCoordinates implémentée dans la classe Event
+@SuppressLint("DefaultLocale")
 fun offsetOverlappingMarkers(events: List<Event>): List<Event> {
     // Identifier les groupes de marqueurs aux mêmes coordonnées
     val pointGroups = events.groupBy {

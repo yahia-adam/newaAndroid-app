@@ -78,7 +78,7 @@ fun EventDetailBottomSheet(
         targetValue = when {
             !isVisible -> 0.dp
             bottomSheetState == BottomSheetState.EXPANDED -> 600.dp
-            else -> 900.dp
+            else -> 850.dp
         },
         label = "detailBottomSheetHeight"
     )
@@ -158,15 +158,6 @@ fun DetailBottomSheetHeader(
         )
 
         Row {
-            IconButton(onClick = onToggle) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Réduire" else "Développer",
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
             IconButton(onClick = onClose) {
                 Icon(
                     imageVector = Icons.Default.Close,

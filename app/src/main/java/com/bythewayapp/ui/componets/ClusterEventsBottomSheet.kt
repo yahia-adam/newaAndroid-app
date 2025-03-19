@@ -76,10 +76,12 @@ fun EventsBottomSheet(
         targetValue = when {
             !isVisible -> 0.dp
             bottomSheetState == BottomSheetState.EXPANDED -> 500.dp
-            else -> 1000.dp
+            else -> 850.dp
         },
         label = "bottomSheetHeight"
     )
+
+
 
     Box(
         modifier = modifier
@@ -107,7 +109,7 @@ fun EventsBottomSheet(
                 ) {
                     // Header
                     BottomSheetHeader(
-                        title = "Événements (${events.size})",
+                        title = "Événements",
                         isExpanded = bottomSheetState == BottomSheetState.EXPANDED,
                         onToggle = {
                             bottomSheetState = if (bottomSheetState == BottomSheetState.EXPANDED) {
@@ -151,14 +153,6 @@ fun BottomSheetHeader(
         )
 
         Row {
-            IconButton(onClick = onToggle) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (isExpanded) "Réduire" else "Développer",
-                    modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
 
             IconButton(onClick = onClose) {
                 Icon(
