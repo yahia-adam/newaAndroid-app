@@ -17,19 +17,9 @@ import androidx.compose.material3.Surface
 @Composable
 fun BythewayApp() {
     val navController = rememberNavController()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-    ) { innerPadding ->
-
-        Surface(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            AppNavHost(
-                modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),                navController = navController,
-                startDestination = NavigationItem.PrivyLogin.route
-            )
-        }
-    }
+    AppNavHost(
+        navController = navController,
+        startDestination = NavigationItem.PrivyLogin.route
+    )
 }

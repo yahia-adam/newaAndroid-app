@@ -42,7 +42,7 @@ interface TicketmasterApiService {
 
 object TicketmasterApi {
     private const val API_KEY = BuildConfig.TICKETMASTER_API_KEY
-    private const val LOCALE: String = "fr"
+    private const val LOCALE: String = "Fr-fr"
     private const val COUNTRY_CODE: String = "fr"
     private const val INCLUDE_TEST: String = "no"
     private const val INCLUDE_SPELL_CHECK: String = "yes"

@@ -252,7 +252,7 @@ fun EventCard(
                     Spacer(modifier = Modifier.height(2.dp))
 
                     Text(
-                        text = formatTime(startDate.dateTime),
+                        text = startDate.localTime,
                         style = MaterialTheme.typography.bodySmall,
                         color = DarkGray
                     )

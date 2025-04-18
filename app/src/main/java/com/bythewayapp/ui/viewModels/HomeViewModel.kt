@@ -244,30 +244,15 @@ class HomeViewModel @Inject constructor(
                     classificationName = classificationName,
                     classificationId = classificationId,
                     city = city,
-                    geoPoint = geoHash,
+                    geoPoint = null,
                 )
 
                 val events = response.embedded?.events ?: emptyList()
                 if (events.isNotEmpty()) {
+                    Log.d(TAG, "event price min = ${events[0].priceRanges}")
                     bythewayUiSate = BythewayUiSate.Success(events)
-                } else {
-                    val response2 = eventRepository.getEvents(
-                        keyword = keyword,
-                        id = id,
-                        startDateTime = startDateTime,
-                        endDateTime = endDateTime,
-                        size = size,
-                        classificationName = classificationName,
-                        classificationId = classificationId,
-                        city = DEFAULT_CITY,
-                        geoPoint = null
-                    )
-
-                    val events2 = response2.embedded?.events ?: emptyList()
-                    if (events2.isNotEmpty()) {
-                        bythewayUiSate = BythewayUiSate.Success(events)
-                    }
                 }
+
             } catch (e: IOException) {
                 bythewayUiSate = BythewayUiSate.InternetConnectionError(context.getString(R.string.erreur_de_connexion))
             } catch (e: TimeoutException) {

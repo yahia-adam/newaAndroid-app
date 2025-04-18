@@ -180,7 +180,8 @@ enum class StatusCode {
 
 class TicketmasterDate(
     val localDate: String,
-    val dateTime: String
+    val dateTime: String,
+    val localTime: String,
 )
 
 class TicketMasterImages(

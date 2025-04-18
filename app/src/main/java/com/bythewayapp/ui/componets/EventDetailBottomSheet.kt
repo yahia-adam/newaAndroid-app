@@ -219,7 +219,7 @@ fun EventDetailContent(
                     )
 
                     Text(
-                        text = formatTime(startDate.dateTime),
+                        text = startDate.localTime,
                         style = MaterialTheme.typography.bodyMedium,
                         color = DarkGray
                     )
