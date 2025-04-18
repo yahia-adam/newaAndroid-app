@@ -195,6 +195,8 @@ fun MapBoxView(
     onDateRangeChanged: (Long, Long) -> Unit,
     onEventClick: (Event) -> Unit,
     modifier: Modifier = Modifier,
+    long: Double = 47.233334,
+    lat: Double = 2.154925,
     events: List<Event>
 ) {
     val context = LocalContext.current
@@ -252,8 +254,8 @@ fun MapBoxView(
 
     val mapViewportState = rememberMapViewportState {
         setCameraOptions {
-            zoom(12.0)
-            center(Point.fromLngLat(2.3522, 48.8566)) // Coordonnées de Paris
+            zoom(8.0)
+            center(Point.fromLngLat(lat, long)) // Coordonnées centre de france
         }
     }
 

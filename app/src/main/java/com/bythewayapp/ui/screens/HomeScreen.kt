@@ -24,6 +24,8 @@ fun ResultScreen(
     btnSelectedDate: String,
     onDateRangeChanged: (Long, Long) -> Unit,
     events: List<Event>,
+    long: Double = 47.233334,
+    lat: Double = 2.154925,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
@@ -33,6 +35,8 @@ fun ResultScreen(
         btnSelectedDate = btnSelectedDate,
         onDateRangeChanged = onDateRangeChanged,
         events = events,
+        long = long,
+        lat = lat,
         onEventClick = {}
     )
 }
@@ -52,6 +56,8 @@ fun HomeScreen(
                 onDateRangeChanged = { startDate, endDate -> viewModel.onDateRangeChanged(startDate, endDate) },
                 events = bythewayUiSate.events,
                 modifier = modifier,
+                long = bythewayUiSate.long,
+                lat = bythewayUiSate.lat,
                 contentPadding = contentPadding
             )
         }

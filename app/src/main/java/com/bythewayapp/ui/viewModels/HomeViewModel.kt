@@ -31,7 +31,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
 sealed interface BythewayUiSate {
-    data class Success(val events: List<Event>): BythewayUiSate
+    data class Success(val events: List<Event>, val long : Double, val lat: Double): BythewayUiSate
     data class UnknownError(val message: String) : BythewayUiSate
     data class InternetConnectionError(val message: String) : BythewayUiSate
     data class EnableUserLocation(
@@ -106,7 +106,7 @@ class HomeViewModel @Inject constructor(
                         size = DEFAULT_SIZE,
                         startDateTime = startDate ?: "",
                         endDateTime = endDate ?: "",
-                        city = DEFAULT_CITY
+                        city = null
                     )
                 }
                 result.isFailure -> {
@@ -209,7 +209,7 @@ class HomeViewModel @Inject constructor(
                     size = DEFAULT_SIZE,
                     startDateTime = startDate ?: "",
                     endDateTime = endDate ?: "",
-                    city = DEFAULT_CITY
+                    city = null
                 )
             }
         }
@@ -231,8 +231,9 @@ class HomeViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+
             val geoHash = getGeohash(userLocation!!.latitude, userLocation!!.longitude)
-            Log.d(TAG, "GeoHash calculé: $geoHash")
+            Log.d(TAG, "GeoHash calculé: $geoHash, cord: ${userLocation!!.latitude}, ${userLocation!!.longitude}")
 
             try {
                 val response = eventRepository.getEvents(
@@ -244,13 +245,13 @@ class HomeViewModel @Inject constructor(
                     classificationName = classificationName,
                     classificationId = classificationId,
                     city = city,
-                    geoPoint = null,
+                    geoPoint = geoHash,
                 )
 
                 val events = response.embedded?.events ?: emptyList()
                 if (events.isNotEmpty()) {
                     Log.d(TAG, "event price min = ${events[0].priceRanges}")
-                    bythewayUiSate = BythewayUiSate.Success(events)
+                    bythewayUiSate = BythewayUiSate.Success(events, userLocation!!.latitude, userLocation!!.longitude)
                 }
 
             } catch (e: IOException) {
