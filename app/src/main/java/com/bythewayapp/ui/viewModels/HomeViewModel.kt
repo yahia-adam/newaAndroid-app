@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException
 import javax.inject.Inject
 import ch.hsr.geohash.GeoHash
 import android.location.Location
+import android.widget.Toast
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 
@@ -212,6 +213,17 @@ class HomeViewModel @Inject constructor(
                     city = null
                 )
             }
+        } else if (keyword.isEmpty()) {
+            searchJob = viewModelScope.launch {
+                delay(500) // Attend 500ms avant de lancer la recherche
+                getEvents(
+                    keyword = null,
+                    size = DEFAULT_SIZE,
+                    startDateTime = startDate ?: "",
+                    endDateTime = endDate ?: "",
+                    city = null
+                )
+            }
         }
     }
 
@@ -252,6 +264,10 @@ class HomeViewModel @Inject constructor(
                 if (events.isNotEmpty()) {
                     Log.d(TAG, "event price min = ${events[0].priceRanges}")
                     bythewayUiSate = BythewayUiSate.Success(events, userLocation!!.latitude, userLocation!!.longitude)
+                } else {
+                    val message = "Aucun résultat trouvé. Essayez d'élargir votre recherche ou de modifier vos filtres."
+                    bythewayUiSate = BythewayUiSate.Success(emptyList(), userLocation!!.latitude, userLocation!!.longitude)
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                 }
 
             } catch (e: IOException) {

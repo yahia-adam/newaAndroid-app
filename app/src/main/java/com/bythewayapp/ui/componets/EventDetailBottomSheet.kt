@@ -286,7 +286,7 @@ fun EventDetailContent(
             }
 
             // Prix (à droite)
-            Column(
+/*            Column(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.padding(start = 8.dp)
             ) {
@@ -312,7 +312,7 @@ fun EventDetailContent(
                     style = MaterialTheme.typography.bodyMedium,
                     color = DarkGray
                 )
-            }
+            }*/
         }
 
         Spacer(modifier = Modifier.height(16.dp))
