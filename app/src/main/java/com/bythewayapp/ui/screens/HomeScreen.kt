@@ -3,19 +3,17 @@ package com.bythewayapp.ui.screens
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.bythewayapp.core.SettingsHelper
 import com.bythewayapp.model.Event
 import com.bythewayapp.ui.componets.MapBoxView
+import com.bythewayapp.ui.componets.SearchBottomSheet
 import com.bythewayapp.ui.screens.utils.EnableUserLocationScreen
 import com.bythewayapp.ui.viewModels.BythewayUiSate
 import com.bythewayapp.ui.screens.utils.InternetConnectionErrorScreen
 import com.bythewayapp.ui.screens.utils.LoadingScreen
 import com.bythewayapp.ui.screens.utils.UnknownErrorScreen
 import com.bythewayapp.ui.viewModels.HomeViewModel
-import com.bythewayapp.ui.viewModels.LocationErrorType
 
 @Composable
 fun ResultScreen(
@@ -29,6 +27,7 @@ fun ResultScreen(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
+
     MapBoxView(
         keyword = keyword,
         onKeywordChanged = onKeywordChanged,
@@ -39,6 +38,8 @@ fun ResultScreen(
         lat = lat,
         onEventClick = {}
     )
+
+    SearchBottomSheet()
 }
 
 @Composable
@@ -60,6 +61,7 @@ fun HomeScreen(
                 lat = bythewayUiSate.lat,
                 contentPadding = contentPadding
             )
+
         }
 
         is BythewayUiSate.Loading -> {

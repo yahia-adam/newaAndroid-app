@@ -446,30 +446,6 @@ fun MapBoxView(
                 .padding(top = 30.dp, end = 16.dp)
         )
 
-        Column (
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            EnhancedSearchTextField(
-                modifier = Modifier,
-                value = keyword,
-                onValueChange = onKeywordChanged
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            EnhancedDateButton(
-                dateText = btnSelectedDate,
-                onClick = { showDateRangePicker = true }
-            )
-
-            SnackbarHost(hostState = snackState, Modifier.zIndex(1f))
-        }
-
         // Afficher le BottomSheet des événements du cluster
         EventsBottomSheet(
             isVisible = isClusterBottomSheetVisible,
