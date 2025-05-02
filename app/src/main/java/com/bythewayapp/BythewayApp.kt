@@ -8,9 +8,9 @@ import com.bythewayapp.navigation.NavigationItem
 @Composable
 fun BythewayApp() {
     val navController = rememberNavController()
-    
+
     AppNavHost(
         navController = navController,
-        startDestination = NavigationItem.PrivyLogin.route
+        startDestination = NavigationItem.Home.route
     )
 }

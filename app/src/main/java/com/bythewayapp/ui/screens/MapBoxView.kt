@@ -1,4 +1,4 @@
-package com.bythewayapp.ui.componets
+package com.bythewayapp.ui.screens
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -45,7 +45,6 @@ import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.ui.zIndex
 import androidx.compose.material3.rememberDateRangePickerState
 
@@ -75,6 +74,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import com.bythewayapp.R
+import com.bythewayapp.ui.componets.EventDetailBottomSheet
+import com.bythewayapp.ui.componets.EventsBottomSheet
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.extension.compose.MapEffect
 import com.mapbox.maps.plugin.animation.MapAnimationOptions.Companion.mapAnimationOptions
