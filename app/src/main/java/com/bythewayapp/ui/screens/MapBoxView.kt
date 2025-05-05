@@ -211,20 +211,14 @@ fun MapBoxView(
     // État pour suivre la position de l'utilisateur
     var currentUserLocation by remember { mutableStateOf<Point?>(null) }
 
-    // Filtrer les événements invalides
-    val validEvents = events.filter {
-        val point = it.getCoordinates()
-        point.longitude() != 0.0 || point.latitude() != 0.0
-    }
-
     // Prétraiter les événements pour éviter les superpositions
-    val processedEvents = remember(validEvents) {
+    val processedEvents = remember(events) {
         // Pour la production, on utiliserait offsetOverlappingMarkers(validEvents)
         // Mais comme la méthode copyWithNewCoordinates n'est pas encore implémentée,
         // on utilise cette solution temporaire:
 
         // Grouper les événements par coordonnées (arrondi à 6 décimales)
-        val pointGroups = validEvents.groupBy {
+        val pointGroups = events.groupBy {
             String.format("%.6f,%.6f",
                 it.getCoordinates().latitude(),
                 it.getCoordinates().longitude())
@@ -239,7 +233,7 @@ fun MapBoxView(
 
         // Pour l'instant, on retourne les événements originaux
         // À activer une fois que copyWithNewCoordinates sera implémenté
-        validEvents
+        events
     }
 
     val eventPoints = processedEvents.map { it.getCoordinates() }

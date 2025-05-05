@@ -1,5 +1,6 @@
 package com.bythewayapp.data
 
+import android.util.Log
 import com.bythewayapp.core.EventsFileLoader
 import com.bythewayapp.model.Event
 import com.bythewayapp.model.TicketmasterResponse
@@ -21,8 +22,9 @@ class EventRepository @Inject constructor (
         city: String?,
         geoPoint: String?,
         radius: String? = null,
-        ): TicketmasterResponse {
-        return TicketmasterApi.getEvents(
+        ): List<Event> {
+
+        val response = TicketmasterApi.getEvents(
             keyword = keyword,
             id = id,
             startDateTime = startDateTime,
@@ -34,6 +36,13 @@ class EventRepository @Inject constructor (
             geoPoint = geoPoint,
             radius = radius,
         )
+        val events = response.embedded?.events ?: emptyList()
+        val validEvents = events.filter {
+            Log.d("EVENT_REPO", it.images?.get(0)?.fallback.toString())
+            it.isValidEvent()
+        }.shuffled()
+
+        return validEvents
     }
 
     // Récupérer les événements des fichiers

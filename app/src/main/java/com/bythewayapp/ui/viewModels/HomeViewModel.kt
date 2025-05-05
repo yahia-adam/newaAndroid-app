@@ -64,7 +64,19 @@ class HomeViewModel @Inject constructor(
         private set
     companion object {
         const val DEFAULT_SIZE = "200"
+        val DEFAULT_CLASSIFICATION_NAME = listOf<String>("Musique",
+            "Blues",
+            "Jazz",
+            "Métal",
+            "Reggae",
+            "Rock",
+            "Country",
+            "Classique",
+            "Alternatif",
+            "Hip-Hop/Rap",
+            "Chanson Francaise")
         private const val TAG = "HOME_VIEW_MODEL"
+
     }
     init {
         getUserLocation()
@@ -92,7 +104,7 @@ class HomeViewModel @Inject constructor(
         id: List<String>? = null,
         startDateTime: String? = null,
         endDateTime: String? = null,
-        classificationName: List<String>? = null,
+        classificationName: List<String>? = DEFAULT_CLASSIFICATION_NAME,
         classificationId: List<String>? = null,
         size: String? = DEFAULT_SIZE,
         city: String? = null,
@@ -109,7 +121,7 @@ class HomeViewModel @Inject constructor(
             Log.d(TAG, "GeoHash calculé: $geoHash, cord: ${userLocation!!.latitude}, ${userLocation!!.longitude}")
 
             try {
-                val response = eventRepository.getEvents(
+                val events = eventRepository.getEvents(
                     keyword = keyword,
                     id = id,
                     startDateTime = startDateTime,
@@ -122,8 +134,6 @@ class HomeViewModel @Inject constructor(
                     radius = radius,
                 )
 
-                Log.d(TAG, "response = ${response.links?.self?.href}")
-                val events = response.embedded?.events ?: emptyList()
                 if (events.isNotEmpty()) {
                     bythewayUiSate = BythewayUiSate.Success(events, userLocation!!.latitude, userLocation!!.longitude)
                 } else {

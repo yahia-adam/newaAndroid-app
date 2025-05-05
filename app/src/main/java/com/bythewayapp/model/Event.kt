@@ -38,11 +38,16 @@ class Event(
 ) {
 
     fun isValidEvent():Boolean {
+        val point = getCoordinates()
+
+        if (point.longitude() == 0.0 || point.latitude() == 0.0) return false
         if (images?.size == 0) return false
         if (url == null) return false
         if (classifications?.size == 0) return false
         if (priceRanges?.size == 0) return false
         if (dates?.status?.code != StatusCode.ON_SALE) return false
+        if (images?.get(0)?.fallback == true) return false
+        if (getTags().isEmpty()) return false
         return true
     }
 
