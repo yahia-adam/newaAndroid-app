@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -21,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
@@ -50,6 +52,7 @@ fun SearchBottomSheet(
     onQueryChanged: (String) -> Unit,
     suggestions: List<String>,
     onQueryClicqed: (String) -> Unit,
+    onRetryClick: () -> Unit,
     onApplyFilter: (startDate: String?, endDate: String?, selectedGenres: List<String>, radius: Int) -> Unit,
 ) {
     // État pour contrôler l'affichage du FilterBottomSheet
@@ -96,7 +99,8 @@ fun SearchBottomSheet(
                 endDate = end
             },
             selectedGenres = selectedGenres,
-            onGenresSelected = { selectedGenres = it }
+            onGenresSelected = { selectedGenres = it },
+            onRetryClick = onRetryClick
         )
     }
 }
@@ -141,16 +145,16 @@ fun FilterGenre(
 
     val genres = listOf(
         "Musique",
-        "Alternatif",
         "Blues",
-        "Chanson Francaise",
-        "Classique",
-        "Country",
-        "Hip-Hop/Rap",
         "Jazz",
         "Métal",
         "Reggae",
-        "Rock"
+        "Rock",
+        "Country",
+        "Classique",
+        "Alternatif",
+        "Hip-Hop/Rap",
+        "Chanson Francaise",
     )
 
     Column (
@@ -395,6 +399,8 @@ fun FilterBottomSheet(
     selectedGenres: List<String>,
     onGenresSelected: (List<String>) -> Unit,
 
+    onRetryClick: () -> Unit,
+
     onApplyFilter: (startDate: String?, endDate: String?, selectedGenres: List<String>, radius: Int) -> Unit,
 ) {
 
@@ -409,6 +415,39 @@ fun FilterBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
+                // Header avec boutons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    // Bouton Fermer
+                    IconButton(onClick = { onDismiss() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Fermer"
+                        )
+                    }
+
+                    // Titre centré
+                    Text(
+                        text = "Filtres",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    // Bouton Réinitialiser
+                    TextButton(onClick = {
+                        onRetryClick()
+                        onDismiss()
+                    }) {
+                        Text("Réinitialiser")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 MyFilterSlider(
                     initialRadius = radius,
                     onRadiusChanged = onRadiusChanged

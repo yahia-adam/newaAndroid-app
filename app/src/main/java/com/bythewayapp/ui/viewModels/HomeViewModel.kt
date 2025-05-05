@@ -70,6 +70,12 @@ class HomeViewModel @Inject constructor(
         getUserLocation()
     }
 
+    // menage mapview
+    var isMapView by mutableStateOf<Boolean>(true)
+    fun TraggleView(isTraggleMapView: Boolean) {
+        isMapView = isTraggleMapView
+    }
+
     fun reInitialise() {
         bythewayUiSate = BythewayUiSate.Loading
         keyword = ""

@@ -29,21 +29,26 @@ fun ResultScreen(
     events: List<Event>,
     long: Double = 47.233334,
     lat: Double = 2.154925,
-    onRetryClick: () -> Unit
+    onRetryClick: () -> Unit,
+    isMapView : Boolean,
+    onTragleView: (Boolean) -> Unit
 ) {
-    var isMapView by remember { mutableStateOf(true) }
 
     if (isMapView) {
         MapBoxView(
             events = events,
             long = long,
             lat = lat,
-            onTragleListClick = { isMapView = false }
+            onTragleListClick = {
+                onTragleView(false)
+            }
         )
     } else {
         EventListView(
             events = events,
-            onTragleMapClick = {isMapView = true},
+            onTragleMapClick = {
+                onTragleView(true)
+            },
             onRetryClick = onRetryClick
         )
     }
@@ -66,7 +71,8 @@ fun HomeScreen(
                 onApplyFilter = { start, end, genres, radius ->
                     viewModel.updateFilters(start, end, genres, radius)
                     viewModel.applyFilter()
-                }
+                },
+                onRetryClick = {viewModel.reInitialise()}
             )
         }
     ) {  innerPadding ->
@@ -85,7 +91,9 @@ fun HomeScreen(
                         modifier = modifier,
                         long = bythewayUiSate.long,
                         lat = bythewayUiSate.lat,
-                        onRetryClick = {viewModel.reInitialise()}
+                        onRetryClick = {viewModel.reInitialise()},
+                        isMapView = viewModel.isMapView,
+                        onTragleView = {view -> viewModel.TraggleView(view)}
                     )
                 }
 
