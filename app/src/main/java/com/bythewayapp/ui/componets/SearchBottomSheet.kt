@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -21,6 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedCard
@@ -36,13 +38,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import java.time.format.DateTimeFormatter
 import java.time.Instant
 import java.time.ZoneId
 import androidx.compose.runtime.mutableStateListOf
-
+import androidx.compose.foundation.layout.heightIn
 
 @Composable
 fun SearchBottomSheet(
@@ -50,6 +51,7 @@ fun SearchBottomSheet(
     onQueryChanged: (String) -> Unit,
     suggestions: List<String>,
     onQueryClicqed: (String) -> Unit,
+    onRetryClick: () -> Unit,
     onApplyFilter: (startDate: String?, endDate: String?, selectedGenres: List<String>, radius: Int) -> Unit,
 ) {
     // État pour contrôler l'affichage du FilterBottomSheet
@@ -96,7 +98,8 @@ fun SearchBottomSheet(
                 endDate = end
             },
             selectedGenres = selectedGenres,
-            onGenresSelected = { selectedGenres = it }
+            onGenresSelected = { selectedGenres = it },
+            onRetryClick = onRetryClick
         )
     }
 }
@@ -141,16 +144,16 @@ fun FilterGenre(
 
     val genres = listOf(
         "Musique",
-        "Alternatif",
         "Blues",
-        "Chanson Francaise",
-        "Classique",
-        "Country",
-        "Hip-Hop/Rap",
         "Jazz",
         "Métal",
         "Reggae",
-        "Rock"
+        "Rock",
+        "Country",
+        "Classique",
+        "Alternatif",
+        "Hip-Hop/Rap",
+        "Chanson Francaise",
     )
 
     Column (
@@ -395,20 +398,59 @@ fun FilterBottomSheet(
     selectedGenres: List<String>,
     onGenresSelected: (List<String>) -> Unit,
 
+    onRetryClick: () -> Unit,
+
     onApplyFilter: (startDate: String?, endDate: String?, selectedGenres: List<String>, radius: Int) -> Unit,
 ) {
 
     if (isVisible) {
-        val sheetState = rememberModalBottomSheetState()
+
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true, // Permet l'expansion totale
+        )
 
         ModalBottomSheet(
             onDismissRequest = { onDismiss() },
             sheetState = sheetState
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
+                // Header avec boutons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+
+                    // Bouton Fermer
+                    IconButton(onClick = { onDismiss() }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Fermer"
+                        )
+                    }
+
+                    // Titre centré
+                    Text(
+                        text = "Filtres",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    // Bouton Réinitialiser
+                    TextButton(onClick = {
+                        onRetryClick()
+                        onDismiss()
+                    }) {
+                        Text("Effacer")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 MyFilterSlider(
                     initialRadius = radius,
                     onRadiusChanged = onRadiusChanged
