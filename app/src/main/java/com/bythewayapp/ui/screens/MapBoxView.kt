@@ -76,6 +76,7 @@ import androidx.compose.ui.res.painterResource
 import com.bythewayapp.R
 import com.bythewayapp.ui.componets.EventDetailBottomSheet
 import com.bythewayapp.ui.componets.EventsBottomSheet
+import com.bythewayapp.ui.componets.ListButton
 import com.mapbox.maps.CameraOptions
 import com.mapbox.maps.extension.compose.MapEffect
 import com.mapbox.maps.plugin.animation.MapAnimationOptions.Companion.mapAnimationOptions
@@ -190,11 +191,7 @@ fun handleLocationClick(
 @SuppressLint("DefaultLocale")
 @Composable
 fun MapBoxView(
-    keyword: String,
-    onKeywordChanged: (String) -> Unit,
-    btnSelectedDate: String,
-    onDateRangeChanged: (Long, Long) -> Unit,
-    onEventClick: (Event) -> Unit,
+    onTragleListClick: () -> Unit,
     modifier: Modifier = Modifier,
     long: Double = 47.233334,
     lat: Double = 2.154925,
@@ -249,9 +246,6 @@ fun MapBoxView(
 
     // État pour stocker les bitmaps des marqueurs
     val markerBitmaps = remember { mutableStateMapOf<String, Bitmap?>() }
-
-    val snackState = remember { SnackbarHostState() }
-    var showDateRangePicker by remember { mutableStateOf(false) }
 
     val mapViewportState = rememberMapViewportState {
         setCameraOptions {
@@ -466,22 +460,15 @@ fun MapBoxView(
             isVisible = isEventDetailBottomSheetVisible,
             event = selectedEvent,
             onClose = { isEventDetailBottomSheetVisible = false },
-            onNavigate = { event ->
-                // Rediriger l'utilisateur vers l'URL de réservation de l'événement
-                onEventClick(event)
-                isEventDetailBottomSheetVisible = false
-            },
             modifier = Modifier.zIndex(3f) // Priorité plus élevée que le BottomSheet de cluster
         )
 
-        if (showDateRangePicker) {
-            DateRangePickerModal(
-                onDismiss = { showDateRangePicker = false },
-                onDateRangeSelected = { startDate, endDate ->
-                    onDateRangeChanged(startDate, endDate)
-                }
-            )
-        }
+        ListButton(
+            onClick = onTragleListClick,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
+        )
     }
 }
 
@@ -602,63 +589,6 @@ fun offsetOverlappingMarkers(events: List<Event>): List<Event> {
     }
 
     return result
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun DateRangePickerModal(
-    onDismiss: () -> Unit,
-    onDateRangeSelected: (Long, Long) -> Unit
-) {
-    val state = rememberDateRangePickerState()
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
-            .zIndex(2f),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .background(Color.White)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Select Date Range",
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            DateRangePicker(state = state, modifier = Modifier.weight(1f))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Button(onClick = onDismiss) {
-                    Text("Cancel")
-                }
-
-                Button(
-                    onClick = {
-                        if (state.selectedEndDateMillis != null) {
-                            onDateRangeSelected(
-                                state.selectedStartDateMillis!!,
-                                state.selectedEndDateMillis!!
-                            )
-                            onDismiss()
-                        }
-                    },
-                    enabled = state.selectedEndDateMillis != null
-                ) {
-                    Text("Save")
-                }
-            }
-        }
-    }
 }
 
 /**

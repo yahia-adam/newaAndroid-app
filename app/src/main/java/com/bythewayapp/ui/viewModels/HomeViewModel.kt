@@ -28,8 +28,11 @@ import javax.inject.Inject
 import ch.hsr.geohash.GeoHash
 import android.location.Location
 import android.widget.Toast
+import androidx.compose.runtime.mutableStateListOf
+import com.bythewayapp.model.TicketmasterSuggestionResponse
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 
 sealed interface BythewayUiSate {
     data class Success(val events: List<Event>, val long : Double, val lat: Double): BythewayUiSate
@@ -56,33 +59,150 @@ class HomeViewModel @Inject constructor(
     private val context: Context
 ) : ViewModel() {
 
-    companion object {
-        const val DEFAULT_SIZE = "200"
-        const val DEFAULT_CITY = "Paris"
-        const val BTN_SELECTED_DATE = "Select Date Range"
-        private const val TAG = "HOME_VIEW_MODEL"
-    }
-
+    // global
     var bythewayUiSate: BythewayUiSate by mutableStateOf(BythewayUiSate.Loading)
         private set
-
-    var keyword by mutableStateOf("")
-        private set
-
-    private var startDate by mutableStateOf<String?>(null)
-    private var endDate by mutableStateOf<String?>(null)
-
-    var btnSelectedDate by mutableStateOf(BTN_SELECTED_DATE)
-        private set
-
-    private val dateFormatter = SimpleDateFormat("d MMM", Locale.getDefault())
-    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-
-    private var userLocation by mutableStateOf<Location?>(null)
-    private var locationAttempts = 0
-
+    companion object {
+        const val DEFAULT_SIZE = "200"
+        private const val TAG = "HOME_VIEW_MODEL"
+    }
     init {
         getUserLocation()
+    }
+
+    fun reInitialise() {
+        bythewayUiSate = BythewayUiSate.Loading
+        keyword = ""
+        startDate = null
+        endDate = null
+        radius = "50"
+        genres = emptyList()
+        getUserLocation()
+    }
+
+    // events
+    fun getEvents(
+        keyword: String? = null,
+        id: List<String>? = null,
+        startDateTime: String? = null,
+        endDateTime: String? = null,
+        classificationName: List<String>? = null,
+        classificationId: List<String>? = null,
+        size: String? = DEFAULT_SIZE,
+        city: String? = null,
+        radius: String? = "50",
+        ) {
+        if (userLocation == null) {
+            getUserLocation()
+            return
+        }
+
+        viewModelScope.launch {
+
+            val geoHash = getGeohash(userLocation!!.latitude, userLocation!!.longitude)
+            Log.d(TAG, "GeoHash calculé: $geoHash, cord: ${userLocation!!.latitude}, ${userLocation!!.longitude}")
+
+            try {
+                val response = eventRepository.getEvents(
+                    keyword = keyword,
+                    id = id,
+                    startDateTime = startDateTime,
+                    endDateTime = endDateTime,
+                    size = size,
+                    classificationName = classificationName,
+                    classificationId = classificationId,
+                    city = city,
+                    geoPoint = geoHash,
+                    radius = radius,
+                )
+
+                Log.d(TAG, "response = ${response.links?.self?.href}")
+                val events = response.embedded?.events ?: emptyList()
+                if (events.isNotEmpty()) {
+                    bythewayUiSate = BythewayUiSate.Success(events, userLocation!!.latitude, userLocation!!.longitude)
+                } else {
+                    val message = "Aucun résultat trouvé. Essayez d'élargir votre recherche ou de modifier vos filtres."
+                    bythewayUiSate = BythewayUiSate.Success(emptyList(), userLocation!!.latitude, userLocation!!.longitude)
+                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                }
+            } catch (e: IOException) {
+                bythewayUiSate = BythewayUiSate.InternetConnectionError(context.getString(R.string.erreur_de_connexion))
+            } catch (e: TimeoutException) {
+                bythewayUiSate = BythewayUiSate.InternetConnectionError(context.getString(R.string.error_connection_lent))
+            } catch (e: Exception) {
+                Log.e(TAG, "Erreur lors de la récupération des événements", e)
+                bythewayUiSate = BythewayUiSate.UnknownError(context.getString(R.string.error_inconue))
+            }
+        }
+    }
+
+    // event suggestion
+    var eventsuggestions by mutableStateOf<List<String>>(emptyList())
+        private set
+    fun fetchEventsSuggestions(query: String) {
+        viewModelScope.launch {
+            try {
+                val suggestions = eventRepository.getSuggestions(query) // à créer dans ton repo
+                eventsuggestions = suggestions.embedded?.events?.map { e ->
+                    e.name
+                } ?: emptyList()
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Erreur suggestions", e)
+                eventsuggestions = emptyList()
+            }
+            Log.d(TAG, "suggestions = ${eventsuggestions.size}")
+        }
+    }
+
+    // -------------------------- filter --------------------------
+    // keyworld
+    var keyword by mutableStateOf("")
+        private set
+    fun onKeywordChanged(value: String) {
+        keyword = value
+        applyFilter()
+    }
+
+    // Filter
+    private var startDate by mutableStateOf<String?>(null)
+    private var endDate by mutableStateOf<String?>(null)
+    private var genres by mutableStateOf<List<String>>(emptyList())
+    private var radius by mutableStateOf<String?>(null)
+
+    private val inputDateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    private val apiDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'00:00:00'Z'")
+
+    fun updateFilters(start: String?, end: String?, selectedGenres: List<String>, selectedRadius: Int) {
+        startDate = start?.let {
+            LocalDate.parse(it, inputDateFormatter).format(apiDateFormatter)
+        }
+        endDate = end?.let {
+            LocalDate.parse(it, inputDateFormatter).format(apiDateFormatter)
+        }
+        genres = selectedGenres
+        radius = selectedRadius.toString()
+    }
+
+    fun applyFilter() {
+
+        Log.d(TAG, "radius = $radius\nstartDate = $startDate\nendDate = $endDate\ngenres = $genres")
+        // Appeler la fonction pour récupérer les événements
+
+        getEvents(
+            keyword = if (keyword.isNotEmpty()) keyword else null,
+            startDateTime = startDate,
+            endDateTime = endDate,
+            classificationName = genres,
+            radius = radius
+        )
+    }
+
+    // user localtion
+    private var userLocation by mutableStateOf<Location?>(null)
+    private var locationAttempts = 0
+    fun getGeohash(latitude: Double, longitude: Double, precision: Int = 12): String {
+        val geoHash = GeoHash.withBitPrecision(latitude, longitude, precision * 5)
+        return geoHash.toBase32().substring(0, 7)
     }
 
     fun getUserLocation() {
@@ -110,6 +230,7 @@ class HomeViewModel @Inject constructor(
                         city = null
                     )
                 }
+
                 result.isFailure -> {
                     // Gérer les différents types d'erreurs de localisation
                     val exception = result.exceptionOrNull()
@@ -146,138 +267,4 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun getGeohash(latitude: Double, longitude: Double, precision: Int = 12): String {
-        val geoHash = GeoHash.withBitPrecision(latitude, longitude, precision * 5)
-        return geoHash.toBase32().substring(0, 7)
-    }
-
-    fun reInitialise() {
-        bythewayUiSate = BythewayUiSate.Loading
-        keyword = ""
-        btnSelectedDate = BTN_SELECTED_DATE
-        getUserLocation()
-    }
-
-    fun formatDateRange(startDate: Long, endDate: Long): String {
-        val startDateString = dateFormatter.format(Date(startDate))
-        val endDateString = dateFormatter.format(Date(endDate))
-
-        return if (startDateString == endDateString) {
-            startDateString // Si la plage est sur un seul jour
-        } else {
-            "$startDateString - $endDateString"
-        }
-    }
-
-    fun onDateRangeChanged(startDateTime: Long, endDateTime: Long) {
-        // Formater la plage de dates pour affichage dans le bouton
-        btnSelectedDate = formatDateRange(startDateTime, endDateTime)
-
-        // Formater les timestamps en chaînes pour les requêtes
-        val formattedStartDate = Instant.ofEpochMilli(startDateTime)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime()
-            .format(formatter)
-        val formattedEndDate = Instant.ofEpochMilli(endDateTime)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime()
-            .format(formatter)
-
-        startDate = formattedStartDate
-        endDate = formattedEndDate
-
-        // Appeler la fonction pour récupérer les événements
-        getEvents(
-            keyword = if (keyword.isNotEmpty()) keyword else null,
-            startDateTime = formattedStartDate,
-            endDateTime = formattedEndDate
-        )
-    }
-
-    private var searchJob: Job? = null
-
-    fun onKeywordChanged(value: String) {
-        keyword = value
-        // Annule la recherche précédente si elle est toujours en cours
-        searchJob?.cancel()
-
-        if (keyword.length > 2) {
-            // Démarre une nouvelle recherche avec un délai
-            searchJob = viewModelScope.launch {
-                delay(500) // Attend 500ms avant de lancer la recherche
-                getEvents(
-                    keyword = keyword,
-                    size = DEFAULT_SIZE,
-                    startDateTime = startDate ?: "",
-                    endDateTime = endDate ?: "",
-                    city = null
-                )
-            }
-        } else if (keyword.isEmpty()) {
-            searchJob = viewModelScope.launch {
-                delay(500) // Attend 500ms avant de lancer la recherche
-                getEvents(
-                    keyword = null,
-                    size = DEFAULT_SIZE,
-                    startDateTime = startDate ?: "",
-                    endDateTime = endDate ?: "",
-                    city = null
-                )
-            }
-        }
-    }
-
-    fun getEvents(
-        keyword: String? = null,
-        id: List<String>? = null,
-        startDateTime: String? = null,
-        endDateTime: String? = null,
-        classificationName: List<String>? = null,
-        classificationId: List<String>? = null,
-        size: String? = null,
-        city: String? = null,
-    ) {
-        if (userLocation == null) {
-            getUserLocation()
-            return
-        }
-
-        viewModelScope.launch {
-
-            val geoHash = getGeohash(userLocation!!.latitude, userLocation!!.longitude)
-            Log.d(TAG, "GeoHash calculé: $geoHash, cord: ${userLocation!!.latitude}, ${userLocation!!.longitude}")
-
-            try {
-                val response = eventRepository.getEvents(
-                    keyword = keyword,
-                    id = id,
-                    startDateTime = startDateTime,
-                    endDateTime = endDateTime,
-                    size = size,
-                    classificationName = classificationName,
-                    classificationId = classificationId,
-                    city = city,
-                    geoPoint = geoHash,
-                )
-
-                val events = response.embedded?.events ?: emptyList()
-                if (events.isNotEmpty()) {
-                    Log.d(TAG, "event price min = ${events[0].priceRanges}")
-                    bythewayUiSate = BythewayUiSate.Success(events, userLocation!!.latitude, userLocation!!.longitude)
-                } else {
-                    val message = "Aucun résultat trouvé. Essayez d'élargir votre recherche ou de modifier vos filtres."
-                    bythewayUiSate = BythewayUiSate.Success(emptyList(), userLocation!!.latitude, userLocation!!.longitude)
-                    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-                }
-
-            } catch (e: IOException) {
-                bythewayUiSate = BythewayUiSate.InternetConnectionError(context.getString(R.string.erreur_de_connexion))
-            } catch (e: TimeoutException) {
-                bythewayUiSate = BythewayUiSate.InternetConnectionError(context.getString(R.string.error_connection_lent))
-            } catch (e: Exception) {
-                Log.e(TAG, "Erreur lors de la récupération des événements", e)
-                bythewayUiSate = BythewayUiSate.UnknownError(context.getString(R.string.error_inconue))
-            }
-        }
-    }
 }

@@ -1,9 +1,13 @@
 package com.bythewayapp.ui.screens
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,30 +26,26 @@ import com.bythewayapp.ui.viewModels.HomeViewModel
 @Composable
 fun ResultScreen(
     modifier: Modifier = Modifier,
-    keyword: String,
-    onKeywordChanged: (String) -> Unit,
-    btnSelectedDate: String,
-    onDateRangeChanged: (Long, Long) -> Unit,
     events: List<Event>,
     long: Double = 47.233334,
     lat: Double = 2.154925,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    isMapview: Boolean
+    onRetryClick: () -> Unit
 ) {
+    var isMapView by remember { mutableStateOf(true) }
 
-    if (isMapview) {
+    if (isMapView) {
         MapBoxView(
-            keyword = keyword,
-            onKeywordChanged = onKeywordChanged,
-            btnSelectedDate = btnSelectedDate,
-            onDateRangeChanged = onDateRangeChanged,
             events = events,
             long = long,
             lat = lat,
-            onEventClick = {}
+            onTragleListClick = { isMapView = false }
         )
     } else {
-        EventListView(events = events)
+        EventListView(
+            events = events,
+            onTragleMapClick = {isMapView = true},
+            onRetryClick = onRetryClick
+        )
     }
 }
 
@@ -56,71 +56,71 @@ fun HomeScreen(
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
 
-    var isMapView by remember { mutableStateOf(true) }
-
     Scaffold(
         modifier = modifier,
         bottomBar = {
             SearchBottomSheet(
-                isMapView = isMapView,
-                onSwitchBtnTroggle = {isMapView = !isMapView}
+                onQueryChanged = { query -> viewModel.fetchEventsSuggestions(query) },
+                suggestions = viewModel.eventsuggestions,
+                onQueryClicqed = { value -> viewModel.onKeywordChanged(value) },
+                onApplyFilter = { start, end, genres, radius ->
+                    viewModel.updateFilters(start, end, genres, radius)
+                    viewModel.applyFilter()
+                }
             )
         }
     ) {  innerPadding ->
 
-        when(val bythewayUiSate = viewModel.bythewayUiSate) {
-            is BythewayUiSate.Success -> {
-                ResultScreen(
-                    keyword = viewModel.keyword,
-                    onKeywordChanged = { viewModel.onKeywordChanged(it) },
-                    btnSelectedDate = viewModel.btnSelectedDate,
-                    onDateRangeChanged = { startDate, endDate -> viewModel.onDateRangeChanged(startDate, endDate) },
-                    events = bythewayUiSate.events,
-                    modifier = modifier,
-                    long = bythewayUiSate.long,
-                    lat = bythewayUiSate.lat,
-                    contentPadding = innerPadding,
-                    isMapview = isMapView
-                )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
 
-            }
+            when (val bythewayUiSate = viewModel.bythewayUiSate) {
 
-            is BythewayUiSate.Loading -> {
-                LoadingScreen(
-                    modifier = modifier,
-                    contentPadding = contentPadding
-                )
-            }
+                is BythewayUiSate.Success -> {
+                    ResultScreen(
+                        events = bythewayUiSate.events,
+                        modifier = modifier,
+                        long = bythewayUiSate.long,
+                        lat = bythewayUiSate.lat,
+                        onRetryClick = {viewModel.reInitialise()}
+                    )
+                }
 
-            is BythewayUiSate.EnableUserLocation -> {
-                EnableUserLocationScreen(
-                    retryAction = { viewModel.getUserLocation() },
-                    errorMessage = bythewayUiSate.message,
-                    errorType = bythewayUiSate.type,
-                    modifier = modifier,
-                    contentPadding = contentPadding
-                )
-            }
+                is BythewayUiSate.Loading -> {
+                    LoadingScreen(
+                        modifier = modifier,
+                    )
+                }
 
-            is BythewayUiSate.InternetConnectionError -> {
-                InternetConnectionErrorScreen(
-                    retryAction = { viewModel.reInitialise() },
-                    errorMessage = bythewayUiSate.message,
-                    modifier = modifier,
-                    contentPadding = contentPadding
-                )
-            }
+                is BythewayUiSate.EnableUserLocation -> {
+                    EnableUserLocationScreen(
+                        retryAction = { viewModel.getUserLocation() },
+                        errorMessage = bythewayUiSate.message,
+                        errorType = bythewayUiSate.type,
+                        modifier = modifier,
+                    )
+                }
 
-            is BythewayUiSate.UnknownError -> {
-                UnknownErrorScreen(
-                    retryAction = { viewModel.reInitialise() },
-                    errorMessage = bythewayUiSate.message,
-                    modifier = modifier,
-                    contentPadding = contentPadding
-                )
+                is BythewayUiSate.InternetConnectionError -> {
+                    InternetConnectionErrorScreen(
+                        retryAction = { viewModel.reInitialise() },
+                        errorMessage = bythewayUiSate.message,
+                        modifier = modifier,
+                    )
+                }
+
+                is BythewayUiSate.UnknownError -> {
+                    UnknownErrorScreen(
+                        retryAction = { viewModel.reInitialise() },
+                        errorMessage = bythewayUiSate.message,
+                        modifier = modifier,
+                    )
+                }
             }
         }
-
     }
 }
 

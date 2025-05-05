@@ -31,6 +31,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,27 +41,29 @@ import androidx.compose.ui.unit.dp
 import java.time.format.DateTimeFormatter
 import java.time.Instant
 import java.time.ZoneId
+import androidx.compose.runtime.mutableStateListOf
+
+
 @Composable
 fun SearchBottomSheet(
     modifier: Modifier = Modifier,
-    isMapView: Boolean = true,
-    onSwitchBtnTroggle: () -> Unit
+    onQueryChanged: (String) -> Unit,
+    suggestions: List<String>,
+    onQueryClicqed: (String) -> Unit,
+    onApplyFilter: (startDate: String?, endDate: String?, selectedGenres: List<String>, radius: Int) -> Unit,
 ) {
     // État pour contrôler l'affichage du FilterBottomSheet
     var showFilterSheet by remember { mutableStateOf(false) }
-    var isSearchBarActive by remember { mutableStateOf(false) }
+
+    var radius by remember { mutableIntStateOf(50) }
+
+    var startDate by remember { mutableStateOf<String?>(null) }
+    var endDate by remember { mutableStateOf<String?>(null) }
+
+    var selectedGenres by remember { mutableStateOf<List<String>>(emptyList()) }
+
 
     Column {
-        if (!isSearchBarActive) {
-            MapListToggleButton(
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(4.dp),
-                isMapView = isMapView,
-                onToggle = onSwitchBtnTroggle
-            )
-        }
-
         Column(
             modifier = modifier
                 .fillMaxWidth()
@@ -70,9 +73,10 @@ fun SearchBottomSheet(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             MySearchBar(
-                isActive = isSearchBarActive,
-                onActiveChange = { isSearchBarActive = it },
                 onShowFilter = { showFilterSheet = true },
+                onQueryChanged = onQueryChanged,
+                suggestions = suggestions,
+                onQueryClicqed = onQueryClicqed
             )
         }
     }
@@ -81,7 +85,18 @@ fun SearchBottomSheet(
     if (showFilterSheet) {
         FilterBottomSheet(
             isVisible = true,
-            onDismiss = { showFilterSheet = false }
+            onDismiss = { showFilterSheet = false },
+            onApplyFilter = onApplyFilter,
+            radius = radius,
+            onRadiusChanged = {radius = it },
+            startDate = startDate,
+            endDate = endDate,
+            onDateChange = { start, end ->
+                startDate = start
+                endDate = end
+            },
+            selectedGenres = selectedGenres,
+            onGenresSelected = { selectedGenres = it }
         )
     }
 }
@@ -116,7 +131,27 @@ fun FilterChipExample(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun FilterGenre(modifier: Modifier = Modifier) {
+fun FilterGenre(
+    modifier: Modifier = Modifier,
+    selectedGenres: List<String>,
+    onGenresSelected: (List<String>) -> Unit
+) {
+
+    val selected = remember { mutableStateListOf<String>().apply { addAll(selectedGenres) } }
+
+    val genres = listOf(
+        "Musique",
+        "Alternatif",
+        "Blues",
+        "Chanson Francaise",
+        "Classique",
+        "Country",
+        "Hip-Hop/Rap",
+        "Jazz",
+        "Métal",
+        "Reggae",
+        "Rock"
+    )
 
     Column (
         modifier = modifier
@@ -130,31 +165,52 @@ fun FilterGenre(modifier: Modifier = Modifier) {
             text = "Genre",
             modifier = Modifier.padding(bottom = 8.dp)
         )*/
+
         FlowRow(
             horizontalArrangement = Arrangement.Start,
             maxItemsInEachRow = Int.MAX_VALUE
         ) {
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "musique")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "concert")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "hip hop")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "pop")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "rock")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "électro")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "jazz")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "classique")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "métal")
-            FilterChipExample(modifier = Modifier.padding(end=4.dp), text = "reggae")
+            genres.forEach { genre ->
+                FilterChip(
+                    modifier = Modifier.padding(end = 4.dp),
+                    onClick = {
+                        if (selected.contains(genre)) {
+                            selected.remove(genre)
+                        } else {
+                            selected.add(genre)
+                        }
+                        onGenresSelected(selected.toList())
+                    },
+                    label = { Text(genre) },
+                    selected = selected.contains(genre),
+                    leadingIcon = if (selected.contains(genre)) {
+                        {
+                            Icon(
+                                imageVector = Icons.Filled.Done,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        }
+                    } else null
+                )
+            }
+
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilterDate(modifier: Modifier = Modifier) {
+fun FilterDate(
+    modifier: Modifier = Modifier,
+    startDate: String?,
+    endDate: String?,
+    onDateChange: (start: String?, end: String?) -> Unit
+) {
     var startDateMillis by remember { mutableStateOf<Long?>(null) }
     var endDateMillis by remember { mutableStateOf<Long?>(null) }
-    var startDateString by remember { mutableStateOf("") }
-    var endDateString by remember { mutableStateOf("") }
+    var startDateString by remember { mutableStateOf(startDate) }
+    var endDateString by remember { mutableStateOf(endDate) }
     var startDatePickerVisible by remember { mutableStateOf(false) }
     var endDatePickerVisible by remember { mutableStateOf(false) }
     var showErrorSnackbar by remember { mutableStateOf(false) }
@@ -190,7 +246,7 @@ fun FilterDate(modifier: Modifier = Modifier) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (startDateString.isEmpty()) "Choisir" else startDateString,
+                        text = if (startDate.isNullOrEmpty()) "Choisir" else startDate,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -213,7 +269,7 @@ fun FilterDate(modifier: Modifier = Modifier) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = if (endDateString.isEmpty()) "Choisir" else endDateString,
+                        text = if (endDate.isNullOrEmpty()) "Choisir" else endDate,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -253,6 +309,9 @@ fun FilterDate(modifier: Modifier = Modifier) {
                                     .toLocalDate()
                                 startDateString = localDate.format(formatter)
                                 showErrorSnackbar = false
+
+                                // 🟢 Notify parent
+                                onDateChange(startDateString, endDateString)
                             }
                         }
                         startDatePickerVisible = false
@@ -295,6 +354,9 @@ fun FilterDate(modifier: Modifier = Modifier) {
                                     .toLocalDate()
                                 endDateString = localDate.format(formatter)
                                 showErrorSnackbar = false
+
+                                // 🟢 Notify parent
+                                onDateChange(startDateString, endDateString)
                             }
                         }
                         endDatePickerVisible = false
@@ -321,8 +383,21 @@ fun FilterDate(modifier: Modifier = Modifier) {
 fun FilterBottomSheet(
     modifier: Modifier = Modifier,
     isVisible: Boolean = false,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+
+    radius: Int,
+    onRadiusChanged: (Int) -> Unit,
+
+    startDate: String?,
+    endDate: String?,
+    onDateChange: (start: String?, end: String?) -> Unit,
+
+    selectedGenres: List<String>,
+    onGenresSelected: (List<String>) -> Unit,
+
+    onApplyFilter: (startDate: String?, endDate: String?, selectedGenres: List<String>, radius: Int) -> Unit,
 ) {
+
     if (isVisible) {
         val sheetState = rememberModalBottomSheetState()
 
@@ -331,16 +406,33 @@ fun FilterBottomSheet(
             sheetState = sheetState
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                MyFilterSlider()
-                FilterDate()
-                FilterGenre()
+                MyFilterSlider(
+                    initialRadius = radius,
+                    onRadiusChanged = onRadiusChanged
+                )
+
+                // Passer les setters
+                FilterDate(
+                    startDate = startDate,
+                    endDate = endDate,
+                    onDateChange = onDateChange
+                )
+
+                FilterGenre(
+                    selectedGenres = selectedGenres,
+                    onGenresSelected = onGenresSelected
+                )
+
                 PrimaryButton(
                     modifier = Modifier.padding(16.dp),
-                    text = "Appliquer le filtre"
+                    text = "Appliquer le filtre",
+                    onclick = {
+                        onApplyFilter(startDate, endDate, selectedGenres, radius)
+                        onDismiss()
+                    }
                 )
             }
         }

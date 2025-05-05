@@ -62,6 +62,7 @@ import java.time.format.TextStyle
 import java.util.Locale
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.zIndex
 
 /**
  * État d'un BottomSheet
@@ -131,7 +132,7 @@ fun EventsBottomSheet(
                     )
 
                     // Liste des événements
-                    EventList(events = events, onEventClick = onEventClick)
+                    EventList(events = events)
                 }
             }
         }
@@ -175,26 +176,34 @@ fun BottomSheetHeader(
     }
 }
 
-/**
- * Liste des événements dans le BottomSheet
- */
 @Composable
 fun EventList(
     events: List<Event>,
-    onEventClick: (Event) -> Unit
 ) {
+    var isEventDetailBottomSheetVisible by remember { mutableStateOf(false) }
+    var selectedEvent by remember { mutableStateOf<Event?>(null) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
     ) {
         items(events) { event ->
-            MinimalistEventCard(event = event, onClick = { onEventClick(event) })
+            MinimalistEventCard(event = event, onClick = {
+                selectedEvent = event
+                isEventDetailBottomSheetVisible = true
+            })
             Spacer(modifier = Modifier.height(12.dp))
         }
-        // Espace supplémentaire en bas
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
+
+    EventDetailBottomSheet(
+        isVisible = isEventDetailBottomSheetVisible,
+        event = selectedEvent,
+        onClose = { isEventDetailBottomSheetVisible = false },
+        modifier = Modifier.zIndex(3f)
+    )
 }
 
 /**

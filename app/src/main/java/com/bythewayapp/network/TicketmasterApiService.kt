@@ -42,11 +42,10 @@ interface TicketmasterApiService {
 
 object TicketmasterApi {
     private const val API_KEY = BuildConfig.TICKETMASTER_API_KEY
-    private const val LOCALE: String = "Fr-fr"
+    private const val LOCALE: String = "Fr"
     private const val COUNTRY_CODE: String = "fr"
     private const val INCLUDE_TEST: String = "no"
     private const val INCLUDE_SPELL_CHECK: String = "yes"
-    private const val DEFAULT_RADIUS: String = "50"
     private const val DEFAULT_UNIT: String = "km"
     private val RESOURCES: List<String> = listOf("events")
 
@@ -66,7 +65,8 @@ object TicketmasterApi {
         classificationName: List<String>?,
         classificationId: List<String>?,
         city: String?,
-        geoPoint: String? = null
+        geoPoint: String? = null,
+        radius: String? = null,
     ) = apiService.searchEvents(
         apiKey = API_KEY,
         id = id,
@@ -82,7 +82,7 @@ object TicketmasterApi {
         city = city,
         includeSpellcheck = INCLUDE_SPELL_CHECK,
         geoPoint = geoPoint,
-        radius = DEFAULT_RADIUS,
+        radius = radius,
         unit = DEFAULT_UNIT
     )
 

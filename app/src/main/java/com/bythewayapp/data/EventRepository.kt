@@ -19,8 +19,9 @@ class EventRepository @Inject constructor (
         endDateTime: String?,
         size: String?,
         city: String?,
-        geoPoint: String?
-    ): TicketmasterResponse {
+        geoPoint: String?,
+        radius: String? = null,
+        ): TicketmasterResponse {
         return TicketmasterApi.getEvents(
             keyword = keyword,
             id = id,
@@ -30,7 +31,8 @@ class EventRepository @Inject constructor (
             classificationName = classificationName,
             classificationId = classificationId,
             city = city,
-            geoPoint = geoPoint
+            geoPoint = geoPoint,
+            radius = radius,
         )
     }
 
@@ -53,7 +55,7 @@ class EventRepository @Inject constructor (
     }
 
 */
-    suspend fun getSuggestion(
+    suspend fun getSuggestions(
         keyword: String,
     ): TicketmasterSuggestionResponse {
         return TicketmasterApi.getSuggestion(

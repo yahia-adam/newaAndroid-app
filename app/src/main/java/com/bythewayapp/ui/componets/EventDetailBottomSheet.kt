@@ -70,7 +70,6 @@ fun EventDetailBottomSheet(
     isVisible: Boolean,
     event: Event?,
     onClose: () -> Unit,
-    onNavigate: (Event) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var bottomSheetState by remember { mutableStateOf(BottomSheetState.COLLAPSED) }

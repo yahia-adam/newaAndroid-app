@@ -31,6 +31,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.res.painterResource
 import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat
 import com.bythewayapp.R
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 
 /**
  * Bouton principal avec support pour l'état désactivé
@@ -62,44 +64,39 @@ fun PrimaryButton(
 }
 
 @Composable
-fun MapListToggleButton(
-    modifier: Modifier = Modifier,
-    isMapView: Boolean,
-    onToggle: () -> Unit
+fun MapButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-
-    val text = if (isMapView) "List" else "Map"
-
     Button(
-        onClick = { onToggle() },
-        modifier = modifier,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        )
+        onClick = onClick,
+        modifier = modifier
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-           if (isMapView) {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    imageVector = Icons.AutoMirrored.Default.List,
-                    contentDescription = "Switch to List view",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            } else {
-                Icon(
-                    modifier = Modifier.size(24.dp),
-                    painter = painterResource(id = R.drawable.baseline_map_24),
-                    contentDescription = "Switch to Map view",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-            Text(
-                text = text,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-        }
+        Icon(
+            painter = painterResource(id = R.drawable.baseline_map_24),
+            contentDescription = "Map View",
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("Map")
+    }
+}
+
+@Composable
+fun ListButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.List,
+            contentDescription = "List View",
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text("List")
     }
 }

@@ -20,23 +20,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-@Preview
 @Composable
-fun MyFilterSlider() {
-    var sliderPosition by remember { mutableIntStateOf(50) }
-    Column (
+fun MyFilterSlider(
+    initialRadius: Int,
+    onRadiusChanged: (Int) -> Unit
+) {
+    var sliderPosition by remember { mutableIntStateOf(initialRadius) }
+
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-    ){
+    ) {
         Text(
-            text = "Maximum distance ${sliderPosition.toString()} Km",
+            text = "Maximum distance ${sliderPosition} Km",
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // Distance labels
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -45,16 +47,18 @@ fun MyFilterSlider() {
             Text(text = "100 Km")
         }
 
-        // Slider
         Slider(
             value = sliderPosition.toFloat(),
-            onValueChange = { sliderPosition = it.toInt() },
+            onValueChange = {
+                sliderPosition = it.toInt()
+                onRadiusChanged(sliderPosition)
+            },
+            valueRange = 1f..100f,
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.secondary,
                 activeTrackColor = MaterialTheme.colorScheme.secondary,
                 inactiveTrackColor = MaterialTheme.colorScheme.secondaryContainer,
-            ),
-            valueRange = 1f..100f
+            )
         )
     }
 }

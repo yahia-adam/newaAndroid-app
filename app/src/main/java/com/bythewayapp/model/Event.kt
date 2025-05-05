@@ -196,6 +196,5 @@ class TicketmasterLocation(
 )
 
 class TicketmasterLink(
-    val link: String,
-    val templated: Boolean
+    val href: String,
 )
